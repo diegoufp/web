@@ -295,3 +295,191 @@ Ejecutemos los comandos **dev** y **build** y miremos el archivo ./dist/main.js 
 - **npm run build**:  transpiló el archivo con sintaxis ESNext a ES5 minificado y sin comentarios, gracias a la configuración del archivo **webpack.config.js**.
 
 ## Inyección de JS en HTML
+
+Para inyectar el código dinámico que genera Webpack en los archivos HTML, necesita 2 dependencias : **html-webpack-plugin** y **html-loader**.
+
+Instala las dependencias:
+```
+npm i -D html-webpack-plugin html-loader
+```
+- `html-loader`: gestiona la inyeccion al archivo html
+- `html-webpack-plugin`: toma como referencia el archivo index que nosotros le digamos y posteriormente estaria generando los archivos html de salida
+
+ahora crearemos un archivo html de referencia desde la carpeta raiz:
+```
+cd src
+touch index.html
+```
+ESto seria lo unico que necesitamos escribir en el archivo `index.html`:
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprendiendo webpack</title>
+</head>
+<body>
+    <div id="app"></div>
+</body>
+</html>
+```
+
+Agrega la siguiente regla al archivo `webpack.config.js`:
+```js
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+module.exports = {
+    module: {
+        rules: [
+            {
+                test: /\.js$/i,
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader"
+                }
+            },
+            {
+                test: /\.html$/i,
+                use: [
+                    {
+                        loader: "html-loader",
+                        options: {
+                            minimize: true
+                        }
+                    }
+                ]
+            }
+        ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./src/index.html",
+            filename: "./index.html"
+        })
+    ]
+}
+```
+En la segunda **rules**(regla) en el atributo **use** usamos `[]` en lugar de `{}` esto quiere decir que podemos usar mas de un loader.
+
+- `options`: pasar algunas opciones
+    - `minimize`: significa que cuando el archivo html pasase la compilacion a webpack  me lo va a entregar minificado en la carpeta `dist`.
+
+- `plugins`: para agregar los plugin primero tienen que mandarlos a llamar en legunaje node.js. En este caso seria: 
+`const HtmlWebpackPlugin = require("html-webpack-plugin");`
+
+- `HtmlWebpackPlugin`: le pasamos en un objeto las propiedades a este plugin.
+  - `template`: cual es el archivo html base de; que se va a vazar para generarme la minimizacion.
+  - `filename`: como quiero que se llame el archivo en la carpeta de distribucion.
+
+En la documentacion de[webpak se pueden ver las formas de agregar los [html-loader](https://webpack.js.org/loaders/html-loader/).
+
+Ejecutemos los comandos **dev** o **build** y miremos el archivo `./dist/index.html` después de ejecutarlos.
+
+No es necesario incluir el JavaScript dentro del archivo HTML, Webpack lo ha inyectado automáticamente y ha minificado el código.
+
+## Extracción de CSS
+Webpack por sí sólo no sabe como extraer código CSS en un archivo externo, pero tiene un loader y un plugin que lo hace.
+
+Instala las dependencias:
+```
+npm i -D mini-css-extract-plugin css-loader
+```
+
+Agrega la siguiente regla al archivo `webpack.config.js`:
+```js
+const HtmlWebpackPlugin = require("html-webpack-plugin"),
+MinicssExtractPlugin = require("mini-css-extract-plugin");
+
+module.exports = {
+    module: {
+        rules: [
+            {
+                test: /\.js$/i,
+                exclude: /node_modules/,
+                use: {
+                    loader: "babel-loader"
+                }
+            },
+            {
+                test: /\.html$/i,
+                use: [
+                    {
+                        loader: "html-loader",
+                        options: {
+                            minimize: true
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.css$/i,
+                use: [MinicssExtractPlugin.loader, "css-loader"]
+            }
+        ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./src/index.html",
+            filename: "./index.html"
+        }),
+        new MinicssExtractPlugin()
+    ]
+}
+```
+
+ES importante que en `use` se agregen los louder en el orden correspondiente por que si no no va a funcionar.
+
+Ahora crea el archivo `./src/style.css` con algo de código:
+```css
+html {
+  box-sizing: border-box;
+  font-family: sans-serif;
+  font-size: 16px;
+  color: #8dd6f9;
+  background-color: #2b3a42;
+}
+```
+
+Ahora importamos los estilos desde el punto de entrada, el archivo `./src/index.js`:
+```js
+import style from "./style.css"; //esto es lo unico que vamos a agregar
+
+const arr = [1,2,3],
+condeESNext = () => console.log(...arr);
+
+condeESNext();
+```
+
+Ejecutemos los comandos **dev** o **build** y miremos el archivo ``./dist/index.html`` después de ejecutarlos.
+
+No es necesario incluir el CSS dentro del archivo HTML, Webpack lo ha inyectado automáticamente y ha creado el archivo de estilos **main.css**. 
+
+## Servidor Web de Desarrollo
+No es muy óptimo estar ejecutando el comando **dev** cada vez que hacemos un cambio en nuestra aplicación lo ideal es configurar un servidor web de prueba que en automático recompile nuestro código y recargue el navegador.
+
+Webpack, cuenta con su propio servido de desarrollo.
+
+Instala la dependencia:
+```
+npm i -D webpack-dev-server
+```
+
+Agregamos el comando **start** a nuestro **package.json**:
+```json
+"scripts": {
+  "start": "webpack serve  --mode development --open --port 3000"
+}
+```
+- `open`: indicacion oara que abra automaticamente nuestro navegador.
+- `port`: incia el numero del puerto, si no lo ponemos, por defecto sera el puerto 8080
+Al ejecutarlo, Webpack abrirá la aplicación en una ventana del navegador.
+
+```
+npm start
+```
+
+## Manejo de archivos
+
+## optimizacion de imagenes
