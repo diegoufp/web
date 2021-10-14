@@ -5414,3 +5414,457 @@ El json-server tiene que estar activado
         })
 </script>
 ```
+
+## Reactividad
+Para comprender el paradigma de la programación reactiva en JavaScript y entender cómo es que funcionan internamente librerías y frameworks como React, Angular, Vue, Svelte, Polymer, etc; es necesario comprender algunos conceptos importantes:
+
+#### Reactividad
+La reactividad de los datos, simplemente es que la interfaz de usuario de un sitio o aplicación se modifica a los cambios en los datos de la misma.
+
+Cada vez que se actualizan los datos, la interfaz de usuario lo hace automáticamente para que coincida con la lógica de programación de la aplicación.
+
+#### Estado
+El estado son los datos de tu aplicación.
+
+Entonces, ¿por qué se le llama estado en lugar de datos?
+
+Porque tiene una duración determinada, el estado son datos en un momento particular de la aplicación, por ello decimos: **el estado actual de los datos de la aplicación**.
+
+#### Interfaz basada en el estado
+Una interfaz basada en el estado, es aquella que usa los datos de la aplicación en todo momento para pintar su elementos visuales.
+
+Los elementos visuales de la interfaz suelen llamarse componentes.
+
+#### Componentes
+
+Para definir el término componente citaré la definición de Nicole Sullivan que dice:
+
+```
+“It's a repeating visual pattern, that can be abstracted into an independent snippet of HTML, CSS and possibly JavaScript.” Nicole Sullivan.
+```
+
+Traduciendo:
+
+Es un patrón visual repetido, que se puede resumir en un fragmento independiente de HTML, CSS y posiblemente JavaScript.
+
+Los componentes:
+
+- Son un fragmento de la interfaz que cumple una única función.
+- Son reutilizables ( principio DRY - Don´t Repeat Yourself ).
+- Son independientes, tanto de su contexto como del resto de componentes.
+- Son autocontenidos, no filtran estilos o funcionalidad a otros componentes.
+
+#### Programación Reactiva orientada a Componentes
+
+Con lo descrito anteriormente podemos decir que una aplicación reactiva y basada en componentes nos permiten separar el código y los elementos de la interfaz en pequeñas piezas independientes y reutilizables que estarán aisladas una de otras, y en lugar de intentar apuntar y manipular directamente los elementos del DOM cuando la aplicación **reaccioné** a las acciones del usuario, ésta actualizará su estado y luego la interfaz se repintará con los cambios en el estado.
+
+### Manipulación NO Reactiva del DOM 
+
+crearemos un archivo html para el ejemplo
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>00_dom_manipulacion</title>
+</head>
+<body>
+    <h1>00_dom_manipulacion</h1>
+    <form action="" id="todo-form">
+        <input type="text" name="" id="todo-item" placeholder="tarea por hacer">
+        <input type="submit" value="Agregar">
+    </form>
+    <h2>Lista de tareas</h2>
+    <ul id="todo-list"></ul>
+    <script>
+        const d = document,
+        $item = d.getElementById("todo-item"),
+        $list = d.getElementById("todo-list");
+
+        d.addEventListener("submit", e=>{
+            if(!e.target.matches("#todo-form")) return false;
+
+            e.preventDefault();
+            //Agregar item a la lista
+            let $li = d.createElement("li");
+            $li.textContent = $item.value;
+            $list.appendChild($li)
+
+            //impiar el input
+            $item.value = "";
+            $item.focus();
+        })
+
+    </script>
+</body>
+</html>
+```
+
+Esta seria una programacion sin tomar en cuenta la reactividad
+
+### Interfaz de Usuario (UI) basada en el Estado
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>01_ui-basada-estado</title>
+</head>
+<body>
+    <h1>01_ui-basada-estado</h1>
+    <form action="" id="todo-form">
+        <input type="text" id="todo-item" placeholder="tarea por hacer">
+        <input type="submit" value="Agregar">
+    </form>
+    <h2>Lista de tareas</h2>
+    <ul id="todo-list"></ul>
+    <script>
+        const d = document;
+
+        //lo primer que tenemos que hacer es crear una variable para implementar el concepto del estado
+        // estado o como los frameworks reactivos lo conocen: el state
+        // generalmente va a ser un objeto en donde por cada atributo que tenga este objeto son cada uno de los estados que quisieramos controlar
+        // agregaremoos un todoList que como valor inicial sera un arreglo vacio
+        // eso significa que por cada lista de tareas que le agregemos al ul en el dom se va a ir generando un elemento de este arrreglo
+        const state = {
+            todoList: []
+        };
+        //tendriamos que tener un mecanismo que justamente me genere esa intefaz basada en el estado
+        // es decir, un template html
+        const template = () => {
+            if(state.todoList.length < 1) {
+                return `<p><em>Lista sin tareas por hacer</em></p>`
+            }
+
+            //el join va a servir para que no salgan comas en la lista de tareas
+            let todos = state.todoList.map(item => `<li>${item}</li>`).join("");
+
+            return todos;
+        }
+
+        //ahora neceitamos un proceso que actue como renderizado
+        const render = () => {
+            console.log(state)
+
+            const $list = d.getElementById("todo-list");
+            if(!$list) return;
+            $list.innerHTML = template();
+        }
+
+        d.addEventListener("DOMContentLoaded", render);
+
+        d.addEventListener("submit", e=>{
+            if(!e.target.matches("#todo-form")) return;
+
+            e.preventDefault();
+
+            const $item = d.getElementById("todo-item");
+            if(!$item) return;
+
+            //actualizar el state
+            state.todoList.push($item.value);
+            render();
+
+            //impiar el input
+            $item.value = "";
+            $item.focus();
+        })
+
+    </script>
+    
+</body>
+</html>
+```
+EL paso que faltaria seria hacer que nuestro estado sea realmente reactivo por que es una mala practica pegar directamente los valores al estado(`state.todoList.push(item.value);`).
+
+### Estado Reactivo
+
+El detalle en hacer reactivo y de actualizar de manera reactiva nuestro estado es evitar manipularlo directamente.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03_estado-inmutable</title>
+</head>
+<body>
+    <h1>03_estado-inmutable</h1>
+    <form action="" id="todo-form">
+        <input type="text" name="" id="todo-item" placeholder="tarea por hacer">
+        <input type="submit" value="Agregar">
+    </form>
+    <h2>Lista de tareas</h2>
+    <ul id="todo-list"></ul>
+    <script>
+        const d = document;
+
+        //el state
+        const state = {
+            todoList: []
+        };
+        
+        // Template UI
+        const template = () => {
+            if(state.todoList.length < 1) {
+                return `<p><em>Lista sin tareas por hacer</em></p>`
+            };
+            let todos = state.todoList.map(item => `<li>${item}</li>`).join("");
+
+            return todos;
+        }
+
+        //Render UI
+        const render = () => {
+            const $list = d.getElementById("todo-list");
+            if(!$list) return;
+            $list.innerHTML = template();
+        }
+
+        //Actualizar el State de forma reactiva
+        const setState = obj =>{
+            // setState va a recibir un objeto 
+            // y va a recorrer cada una de las llaves de este objeto 
+            // y la que coincida con alguna llave de state original ahi es donde la va a asignar
+            for(let key in obj){
+                if(state.hasOwnProperty(key)){
+                    state[key] = obj[key];
+                }
+            };
+
+            render();
+            // con esto estariamos actualizando el estado de nuestra aplicaccion de forma reactiva
+        } 
+
+        d.addEventListener("DOMContentLoaded", render);
+
+        //Estableciendo valores por defecto al State
+        setState({
+            todoList:["tarea 1", "tarea 2"]
+            //en este caso aun que agregaramos otra propiedad con un nombre que no este en el "state" entonces el programa la ignorara
+        });
+
+        //Aun falta que sea inmutable por que con la tecnica siguiente se puede modificar desde a fuera
+        const items = state.todoList;
+        items.push("tarea 3")
+        // Estado Mutable, por que permite modificar el estado directamente creando una copia del objeto y agregando otro elemento
+
+
+        d.addEventListener("submit", e=>{
+            if(!e.target.matches("#todo-form")) return false;
+
+            e.preventDefault();
+            const $item = d.getElementById("todo-item");
+            if(!$item) return;
+
+            //actualizar el state
+            state.todoList.push(item.value);
+            render();
+
+            //impiar el input
+            $item.value = "";
+            $item.focus();
+        })
+
+    </script>
+    
+</body>
+</html>
+```
+
+### Estado Inmutable
+Para poder hacer un estado inmutable lo que vamos a hacer es que antes de actualizar el estado vamos a obtener una copia de ese estado.
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>03_Estado-Inmutable</title>
+</head>
+<body>
+    <h1>03_Estado-Inmutable</h1>
+    <form action="" id="todo-form">
+        <input type="text" name="" id="todo-item" placeholder="tarea por hacer">
+        <input type="submit" value="Agregar">
+    </form>
+    <h2>Lista de tareas</h2>
+    <ul id="todo-list"></ul>
+    <script>
+        const d = document;
+
+        //el state
+        const state = {
+            todoList: []
+        };
+        
+        // Template UI
+        const template = () => {
+            if(state.todoList.length < 1) {
+                return `<p><em>Lista sin tareas por hacer</em></p>`
+            };
+            let todos = state.todoList.map(item => `<li>${item}</li>`).join("");
+
+            return todos;
+        }
+
+        //Render UI
+        const render = () => {
+            const $list = d.getElementById("todo-list");
+            if(!$list) return;
+            $list.innerHTML = template();
+        }
+
+        //Actualizar el State de forma reactiva
+        const setState = obj =>{
+            for(let key in obj){
+                if(state.hasOwnProperty(key)){
+                    state[key] = obj[key];
+                }
+            };
+
+            render();
+        };
+
+        //Obtenermos una copia inmutable de State
+        // stringify convierte el estado original a cadena de texto, ahi ya hay desvinculacion total de la variable state original
+        // y cuando esa cadena de texto la convertimos de nuevo a un objeto sera un objeto completamente diferente
+        const getState = () => JSON.parse(JSON.stringify(state));
+
+        d.addEventListener("DOMContentLoaded", render);
+
+        //Estableciendo valores por defecto al State
+        setState({
+            todoList:["tarea 1", "tarea 2"]
+            
+        });
+
+        //aqui vamos a tratar de inyectar una tarea adicional
+        // si el estado es inmutanle entonces no se agregara la tarea adicional
+        const items = getState();
+        items.todoList.push("Tarea 4");
+
+        d.addEventListener("submit", e=>{
+            if(!e.target.matches("#todo-form")) return false;
+
+            e.preventDefault();
+            const $item = d.getElementById("todo-item");
+            if(!$item) return;
+
+            //Actualizar el State de foma reactiva 
+            const lastState = getState()
+            lastState.todoList.push($item.value);
+            setState({todoList:lastState.todoList});
+
+            //impiar el input
+            $item.value = "";
+            $item.focus();
+        })
+
+    </script>
+    
+</body>
+</html>
+```
+
+### Componentes con Estado
+
+En esta filosofia de programacion reactiva y orientada a componentes cada pedasito de la UI puede ser un componente y a su vez ede componente tener una UI propia.
+
+Vamos a crear un componente local.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>04 componentes con estado</title>
+</head>
+<body>
+    <h1>04 componentes con estado</h1>
+    <form action="" id="todo-form">
+        <input type="text" name="" id="todo-item" placeholder="tarea por hacer">
+        <input type="submit" value="Agregar">
+    </form>
+    <h2>Lista de tareas</h2>
+    <ul id="todo-list"></ul>
+    <script>
+        const d = document;
+
+        //el state Global
+        const state = {
+            todoList: []
+        };
+        
+        // Template UI
+        const template = () => {
+            if(template.data.todoList.length < 1) {
+                return `<p><em>Lista sin tareas por hacer</em></p>`
+            };
+            let todos = template.data.todoList.map(item => `<li>${item}</li>`).join("");
+
+            return todos;
+        };
+
+        //Agregar State al Template que genera el Componente de UI(state local)
+        template.data = {
+            todoList:[]
+        }
+
+        //Render UI
+        const render = () => {
+            const $list = d.getElementById("todo-list");
+            if(!$list) return;
+            $list.innerHTML = template();
+        }
+
+        //Actualizar el State de forma reactiva
+        const setState = obj =>{
+            for(let key in obj){
+                if(template.data.hasOwnProperty(key)){
+                    template.data[key] = obj[key];
+                }
+            };
+
+            render();
+        };
+
+        const getState = () => JSON.parse(JSON.stringify(template.data));
+
+        d.addEventListener("DOMContentLoaded", render);
+
+        //Estableciendo valores por defecto al State
+        setState({
+            todoList:["tarea 1", "tarea 2"]
+        });
+
+        d.addEventListener("submit", e=>{
+            if(!e.target.matches("#todo-form")) return false;
+
+            e.preventDefault();
+            const $item = d.getElementById("todo-item");
+            if(!$item) return;
+
+            //Actualizar el State de foma reactiva 
+            const lastState = getState();
+            lastState.todoList.push($item.value);
+            setState({todoList:lastState.todoList});
+
+            //impiar el input
+            $item.value = "";
+            $item.focus();
+        });
+
+    </script>
+    
+</body>
+</html>
+```
