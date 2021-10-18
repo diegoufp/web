@@ -524,3 +524,398 @@ Propiedades.propTypes = {
     // isRequired es por si la propiedad es requerida forsozamente
 }
 ```
+
+## Estado
+
+Todos los componentes pueden tener estado. El estado no es mas que las varibales que intervienen en la modificacion de dicho componente y como se encuentran en cierto momento dado, es decir, que valores tienen.
+
+El **state** son los valores internos que manejan la lógica y los datos de un componente, permite que éste reaccione a cualquier cambio lo que hará que se vuelva a renderizar en la interfaz.
+
+El estado tiene 3 características importantes:
+1. Es inmutable.
+2. No se puede modificar directamente.
+3. Es asíncrono.
+
+Para hacer cambios hay que hacer uso del método **setState()**.
+
+El estado de un componente no es accesible desde otro componente excepto de aquel que lo posee y lo asigna.
+
+La **propagación del estado** fluye de forma **unidireccional** y **descendiente** (hacia abajo), esto significa que un componente padre puede pasar valores de su estado a componentes hijos que lo recibirán como propiedades.
+
+En el momento que los valores del estado del padre sufran cambios esto causará que tanto el padre como los hijos que recibieron esos valores como propiedades se rendericen nuevamente y reaccionen a dicho cambio.
+
+Cada componente que se defina como una clase cuenta con un objeto para almacenar información llamado **state**.
+
+Cada vez que cambia el **state** React vuelve a renderizar (pintar) el componente en la vista.
+
+```js
+class Welcome extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      title: "Hola Mundo",
+    };
+  }
+
+  render() {
+    return <h1>{this.state.title}</h1>;
+  }
+}
+```
+
+En este ejemplo estamos definiendo una componente **Welcome** que inicializa el estado con una llave **title**. En el método **render** estamos obteniendo el valor de esa llave con **this.state.title**.
+
+Para cambiar el estado utiliza el método **setState**:
+```js
+this.setState({
+  title: "Hello World",
+});
+```
+
+### Ejemplo de cambio de estado
+```js
+import React, {Component} from "react";
+
+export default class Estado extends Component {
+    // EL estado lo podemos definir en el constructor
+    constructor(props){
+        // tenermos que mandar a llamar el objeto del constrcutor del cual hereda(COmponent) y esto se hace son super
+        super(props);
+        // aqui estariamos creado en objeto del estado
+        this.state = {
+            contador: 0
+        };
+        // el estado se actualiza con setState
+        setInterval(()=>{
+            this.setState({
+                contador: this.state.contador + 1
+                //this.state.contador += 1;
+                //lo que esta comentado es lo que no podemos hacer 
+                // ya que no podemos modificar directamente el estado 
+            })
+        },1000);
+    }
+    render(){
+        //cada vez que es estado se modifica se vuelve a renderizar(pintar)
+        return(
+            <div>
+                <h2>El State</h2>
+                <p>{this.state.contador}</p>
+            </div>
+        )
+    }
+}
+```
+Existen tecnicas mas eficientes.
+
+Cuando se use este codigo va a generar un warning ya que no podemos llamar a setState en un componente que todavia no a sido montado.
+El warning ocurre por el ciclo de vida de los componentes.
+El ciclo de vida principalmente tiene 3 fases:
+- Montado : Cuando la aplicacion react carga en el navegador y ya tenermos el elemento incertado en el dom
+- Actualizacion
+- Desmontaje
+
+Como estamos ejecutando el serInterval en el constructor, cuando se ejecuta el constructor todavia no se hace el renderizado.
+
+El estado de un **component padre** se le puede pasar como propiedad a las propiedades de un componente hijo.
+```js
+import React, {Component} from "react";
+
+//los componentes funcionales(creado con function) no pueden tener estado
+//en las ultimas actualizaciones si se puede con hooks
+function EstadoAHijo(props){
+    return(
+        <div>
+            <h3>{props.contadorHijo}</h3>
+        </div>
+    );
+}
+
+export default class Estado extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            contador: 0
+        };
+        setInterval(()=>{
+            this.setState({
+                contador: this.state.contador + 1
+            })
+        },1000);
+    }
+    render(){
+        return(
+            <div>
+                <h2>El State</h2>
+                <p>{this.state.contador}</p>
+                <EstadoAHijo contadorHijo={this.state.contador}/>
+            </div>
+        )
+    }
+}
+```
+
+## Renderizado Condicional
+
+En React, puedes crear distintos componentes que encapsulan el comportamiento que necesitas. Entonces, puedes renderizar solamente algunos de ellos, dependiendo del estado de tu aplicación.
+
+El renderizado condicional en React funciona de la misma forma que lo hacen las condiciones en JavaScript. Puedes usar el condicional **if** o el **operador ternario** para crear elementos dinámicamente en base al valor del estado o las propiedades que recibe el componente.
+
+Considera estos dos componentes:
+```js
+function SaludoUsuario(props) {
+  return <h1>¡Bienvenid@ nuevamente!</h1>;
+}
+```
+```js
+function SaludoInvitado(props) {
+  return <h1>Por favor, regístrate.</h1>;
+}
+```
+Vamos a crear un componente **Saludar** que muestra cualquiera de estos componentes dependiendo si el usuario ha iniciado sesión o no:
+```js
+function Saludar(props) {
+  const isLoggedIn = props.isLoggedIn;
+
+  if (isLoggedIn) {
+    return <SaludoUsuario />;
+  }
+  return <SaludoInvitado />;
+}
+
+ReactDOM.render(
+  // Intentar cambiando isLoggedIn={true}:
+  <Saludar isLoggedIn={false} />,
+  document.getElementById("root")
+);
+```
+Con el **operador ternario** el código quedaría de la siguiente manera:
+```js
+function Saludar(props) {
+  const isLoggedIn = props.isLoggedIn;
+
+  return isLoggedIn ? <SaludoUsuario /> : <SaludoInvitado />;
+}
+
+ReactDOM.render(
+  // Intentar cambiando isLoggedIn={true}:
+  <Saludar isLoggedIn={false} />,
+  document.getElementById("root")
+);
+```
+
+### Ejemplo de renderizado condicional
+```js
+import React,{Component} from "react";
+
+function Login(){
+    return(
+        <div>
+            <h3>Login</h3>
+        </div>
+    )
+}
+
+function Logout(){
+    return(
+        <div>
+            <h3>Logout</h3>
+        </div>
+    )
+}
+
+export default class RenderizadoCondicional extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            session: true
+        }
+    };
+    render() {
+        return(
+            <div>
+                <h2>Renderizado Condicional</h2>
+                {this.state.session ? <Login/> : <Logout/>}
+            </div>
+        )
+    }
+};
+```
+
+## Renderizado de elementos
+Puedes hacer colecciones de elementos e incluirlos en JSX usando llaves **{}**.
+
+Recorriendo los elementos de un **array** y usando la función **map()** de Javascript.
+
+Por ejemplo:
+```js
+const numeros = [1, 2, 3, 4, 5];
+const listaElementos = numeros.map((numero) => <li>{numero}</li>);
+```
+Incluimos el **array listaElementos** dentro de un elemento `<ul>`, y lo renderizamos en el DOM:
+```js
+ReactDOM.render(<ul>{listaElementos}</ul>, document.getElementById("root"));
+```
+Refactorizamos el ejemplo anterior en un componente que acepte un **array** de numeros e imprima una lista de elementos.
+```js
+function ListaNumeros(props) {
+  const numeros = props.numeros;
+  const listaElementos = numeros.map((numero) => <li>{numero}</li>);
+  return <ul>{listaElementos}</ul>;
+}
+
+const numeros = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  <ListaNumeros numeros={numeros} />,
+  document.getElementById("root")
+);
+```
+
+Al ejecutar este código, serás advertido que una **key** debería ser proporcionada para elementos de lista.
+
+Una “**key**” es un atributo especial de tipo **string** que debes incluir al crear listas de elementos.
+
+Las **keys** ayudan a React a identificar que elementos han cambiado, son agregados, o son eliminados. Las **keys** deben ser dadas a los elementos dentro del array para darle una identidad estable.
+
+La mejor forma de elegir una **key** es usando un string que identifique únicamente a un elemento de la lista entre sus hermanos. Habitualmente vas a usar los IDs de tus datos como **key**.
+
+Cuando no tengas IDs estables para renderizar, puedes usar como **key** el índice de los elementos del **array** de datos como último recurso.
+
+Las **keys** usadas dentro de **arrays** deberían ser únicas entre sus hermanos. Sin embargo, no necesitan ser únicas globalmente. Podemos usar las mismas **keys** cuando creamos dos o más **arrays** diferentes.
+
+Entonces refactorizando nuestro código anterior quedaría así:
+```js
+function ListaNumeros(props) {
+  const numeros = props.numeros;
+  const listaElementos = numeros.map((numero, indice) => (
+    <li key={indice}>{numero}</li>
+  ));
+  return <ul>{listaElementos}</ul>;
+}
+
+const numeros = [1, 2, 3, 4, 5];
+ReactDOM.render(
+  <ListaNumeros numeros={numeros} />,
+  document.getElementById("root")
+);
+```
+
+### Ejemplo de Renderizado de Elementos
+```js
+import React,{Component} from "react";
+
+export default class Register extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            seasons: ["Primavera", "Verano", "Oto;o","Invierno"]
+        }
+    }
+    render(){
+        return (
+            <div>
+                <h2>Renderizado de Elementos</h2>
+                <h3>Estaciones del A;o</h3>
+                <ol>
+                    {this.state.seasons.map((el,index)=> <li key={index}>{el}</li>)}
+                </ol>
+            </div>
+        )
+    }
+};
+
+
+```
+La key es como un id pero este no aparece en el html, es algo que internamente react neceita para detectar cada uno de los elementos que va renderizando 
+
+## Eventos & Binding
+Manejar eventos en React es muy similar a manejar eventos en el DOM. Sin embargo existen algunas diferencias de sintaxis:
+
+- Los eventos de React se nombran usando camelCase, en vez de minúsculas.
+- Con JSX pasas una función como el manejador del evento, en vez de un string.
+Ejemplo, en HTML:
+
+Ejemplo, en HTML:
+```html
+<button onclick="cambiarIdioma()">Cambiar idioma</button>
+```
+Ejemplo, en React:
+```js
+<button onClick={cambiarIdioma}>Cambiar idioma</button>
+```
+
+Otra diferencia es que en React no puedes retornar **false** para prevenir el comportamiento por defecto. Debes, explícitamente, llamar **preventDefault**.
+
+Por ejemplo, en nuestro ejemplo del componente **Welcome** visto en el tema del **Estado** podemos cambiarlo para que cuando hagan click sobre el **h1** cambie el texto. Para eso vamos a definir un método **updateText** que vamos a invocar cuando hagan **click** sobre el **h1**:
+```js
+class Welcome extends Component {
+  constructor() {
+    super();
+
+    this.state = {
+      title: "Hola Mundo",
+    };
+
+    // tenemos que enlazar el método al contexto actual
+    this.updateText = this.updateText.bind(this);
+  }
+
+  updateText() {
+    this.setState({
+      title: "Hello World",
+    });
+  }
+
+  render() {
+    return <h1 onClick={this.updateText}>{this.state.title}</h1>;
+  }
+}
+```
+
+### Ejemplo de Eventos
+```js
+import React,{Component} from "react";
+
+export default class Eventos extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            contador: 0
+        };
+
+        //un detalle muy importante en los componentes basados en estructuras de clase 
+        //tengo que bindear(usar bind) el this de la clase
+        //se puede hacer directamente en la definicion del metodo(en onClick)
+        // pero la buena practica y lo que nos recomienda la gente de react es que lo hagamos justamente en el constructor
+        //asi todo las intancias que despues en el metodo render invoquemos de esa funcion ya van a tener enlazado el this de la clase
+        this.sumar = this.sumar.bind(this);
+        this.restar = this.restar.bind(this);
+    };
+
+    sumar(e){
+        this.setState({
+            contador: this.state.contador + 1
+        })
+    };
+    restar(e){
+        this.setState({
+            contador: this.state.contador - 1
+        })
+    }
+
+
+    render(){
+        return(
+        <div>
+            <h2>Eventos en Componentes de Clase</h2>
+            <h3>{this.state.contador}</h3>
+            <nav>
+                <button onClick={this.sumar}>+</button>
+                <button onClick={this.restar}>-</button>
+            </nav>
+        </div>
+        );
+    }
+}
+```
