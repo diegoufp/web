@@ -830,6 +830,8 @@ export default class Register extends Component {
 La key es como un id pero este no aparece en el html, es algo que internamente react neceita para detectar cada uno de los elementos que va renderizando 
 
 ## Eventos & Binding
+ES6
+
 Manejar eventos en React es muy similar a manejar eventos en el DOM. Sin embargo existen algunas diferencias de sintaxis:
 
 - Los eventos de React se nombran usando camelCase, en vez de minúsculas.
@@ -919,3 +921,444 @@ export default class Eventos extends Component {
     }
 }
 ```
+
+## Eventos & [Property Initializers](https://reactjs.org/blog/2015/01/27/react-v0.13.0-beta-1.html#es7-property-initializers)
+
+- `Property Initializers`: ES7
+
+```js
+import React,{Component} from "react";
+
+//eventos en componentes de clase ES6
+export class EventosES6 extends Component {
+    constructor(props){
+        super(props);
+        this.state = {
+            contador: 0
+        };
+
+        this.sumar = this.sumar.bind(this);
+        this.restar = this.restar.bind(this);
+    };
+
+    sumar(e){
+        this.setState({
+            contador: this.state.contador + 1
+        })
+    };
+    restar(e){
+        this.setState({
+            contador: this.state.contador - 1
+        })
+    }
+
+
+    render(){
+        return(
+        <div>
+            <h2>Eventos en Componentes de Clase ES6</h2>
+            <h3>{this.state.contador}</h3>
+            <nav>
+                <button onClick={this.sumar}>+</button>
+                <button onClick={this.restar}>-</button>
+            </nav>
+        </div>
+        );
+    }
+};
+
+//eventos en componentes de clase ES7
+export class EventosES7 extends Component {
+    //YA NO PONDREMOS EL CONSTRUCTOR
+    state = {
+        contador: 0
+    }
+
+    //para evitar ponerle el bind en el evento(onCLick)
+    //los eventos dentro de la clase los vamos a defrinir con funciones flecha 
+    // la caracteristica d elas funciones flecha es que erendan el this del contexto en el que se encuentran
+    // asi que con funciones flecha ya no tendriamos que usar el bind
+    sumar = (e)=>{
+        this.setState({
+            contador: this.state.contador + 1
+        })
+    };
+    restar = (e) =>{
+        this.setState({
+            contador: this.state.contador - 1
+        })
+    }
+
+
+    render(){
+        return(
+        <div>
+            <h2>Eventos en Componentes de Clase ES7</h2>
+            <h3>{this.state.contador}</h3>
+            <nav>
+                <button onClick={this.sumar}>+</button>
+                <button onClick={this.restar}>-</button>
+            </nav>
+        </div>
+        );
+    }
+};
+```
+
+## Eventos Nativos, Sintéticos & Personalizados
+- [SyntheticBaseEvent](https://es.reactjs.org/docs/events.html) : react envuelve el evento nativo del navegador, le da soporte a los diferentes navegadores donde react se soporta, pero adicionalmente tiene la caracteristica de que tienes un mejor control desde react del evento. No todos los eventos estan soportados, sin embargo, la mayoria si estan soportados.
+
+- `nativeEvent` : Si tienes la necesidad de acceder al evento nativo(al evento de js), eso se puede hacer con `e.nativeEvent`.
+
+```js
+
+export class MasSobreEventos extends Component {
+
+    //si queremos agrear otro paramentros (ademas del evento entonces tenemos que crear una funcion fecha en el onCLick)
+    handleClick = (e, mensaje) => {
+    //e.nativeEvent   //asi accedemos al evento nativo
+    //e.nativeEvent.target   // asi accedemos al targen del evento nativo 
+    //e  //en este caso este seria el evento sintetico de react
+    // e.target  //en este caso seria el target del evento sintetico de react
+    }
+
+    render(){
+        return(
+            <div>
+                <h2>Mas sobre eventos</h2>
+                <button onClick={(e) => this.handleClick(e,"parametro extra agregado")}>Saludar</button>
+            </div>
+        )
+    }
+}
+```
+
+### Evento personalizado en react
+
+Si en lugar de tener un boton(por ejemplo) ya tuvieramos un componente propio que ya fuera un boton y tratamos de asignarle un evento:
+```js
+function Boton(){
+    return(
+        <button>Boton hecho componente</button>
+    )
+}
+```
+```js
+
+export class MasSobreEventos extends Component {
+    handleClick = (e, mensaje) => {
+
+    }
+
+    render(){
+        return(
+            <div>
+                <h2>Mas sobre eventos</h2>
+                <button onClick={(e) => this.handleClick(e,"parametro extra agregado")}>Saludar</button>
+                <Boton onClick={(e) => this.handleClick(e,"parametro extra agregado")}/>
+            </div>
+        )
+    }
+}
+```
+Si ejecutamos este codigo no saldran errores pero al momento de hacer click y tratar de activar el evento no ocurrira nada.
+Esto ocurre por que el evento `onClick` es un atributo de las etiquetas **jsx** y el componente `Boton` no es una etiqueta **jsx**, es un componente de react personalizado que nosotros hemos creado.
+
+Entonces si queremos que funcione el evento `onClick` en este componente persoanlizado tenemos que hacer uso de un **Evento personalizado**.
+
+El **Evento Persoanlizado** en pocas palabras es crear una `prop` que se la pasamos al componente y esa prop se la asignamos al evento con el que estemos trabajando de la etiqueta jsx que internamente este dentro del componente.
+```js
+/*
+function Boton(props){
+    return(
+        <button onClick={props.myOnClick}>Boton hecho componente</button>
+    )
+}*/
+//si usamos la destructuracion podemos simprificar las props y el codigo
+const Boton = ({myOnClick})=>{
+        <button onClick={myOnClick}>Boton hecho componente</button>
+}
+```
+```js
+export class MasSobreEventos extends Component {
+    handleClick = (e, mensaje) => {
+
+    }
+
+    render(){
+        return(
+            <div>
+                <h2>Mas sobre eventos</h2>
+                <button onClick={(e) => this.handleClick(e,"parametro extra agregado")}>Saludar</button>
+                {/*<Boton onClick={(e) => this.handleClick(e,"parametro extra agregado")}/>*/}
+                <Boton myOnClick={(e) => this.handleClick(e,"parametro extra agregado")}/>
+            </div>
+        )
+    }
+}
+``` 
+
+## Comunicación entre Componentes
+La comunicacion entre los componentes en react se da en un solo flujo, de elementos padres a elementos hijos.
+
+Tenemos 3 casos de comunicación entre los componentes de React:
+
+- Comunicación entre un componente padre a uno hijo.
+- Comunicación entre un componente hijo y su padre.
+- Comunicación entre componentes no relacionados.
+
+### Comunicación entre un componente padre a uno hijo
+Éste es el caso más natural en el mundo de React y se hace a través del paso de **props** de un componente padre a uno hijo.
+
+```js
+import React, { Component } from "react";
+
+class Padre extends Component {
+  render() {
+    return (
+      <div>
+        <Hijo mensaje="Mensaje para el hijo 1" />
+        <Hijo mensaje="Mensaje para el hijo 2" />
+      </div>
+    );
+  }
+}
+
+function Hijo(props) {
+  return <h2>{props.mensaje}</h2>;
+}
+
+export default Padre;
+```
+### Comunicación entre un componente hijo y su padre
+
+Cuando tenemos la necesidad de que un componente hijo mande datos a su padre los podemos hacer a traves de los **eventos**, simplemente pasamos una función como **prop** del componente padre al componente hijo, y éste ejecutará la función .
+
+En este ejemplo, cambiaremos el estado del componente padre pasando una función al componente hijo e invocando esa función dentro del componente hijo.
+```js
+import React, {Component} from "react";
+
+export default class Padre extends Component {
+    state={
+        contador:0
+    }
+
+    //este metodo lo va a ejecutar el hijo
+    incrementarContador = (e) =>{
+        this.setState({
+            contador: this.state.contador + 1
+        })
+    }
+    render(){
+        return(
+            <>
+            <h2>Comunicacion entre Componentes</h2>
+            <p>Contador <b>{this.contador}</b></p>
+            {/*Cuando un componente padre necesite ejecutar un metodo del padre simplemente se le pasa como propiedad*/}
+            <Hijo incrementarContador={this.incrementarContador} mensaje="mensaje para hijo 1"/>
+            <Hijo incrementarContador={this.incrementarContador} mensaje="mensaje para hijo 2"/>
+            </>
+        );
+    };
+};
+
+
+function Hijo(props){
+    return (
+        <>
+            <h3>{props.mensaje}</h3>
+            <button onClick={props.incrementarContador}>+</button>
+        </>
+    )
+}
+```
+En este caso cuando se le da click el boton hijo se renderizan los 3 componentes(el padre y los dos hijos).
+
+### Comunicación entre componentes no relacionados
+
+Si los componentes no tienen una relación padre-hijo o están relacionados, pero están demasiado lejos, como por ejemplo, un bisnieto o tataranieto, tenemos que crear un mecanismo de observación y/o suscripción para la comunicación entre dichos componentes.
+
+Al menos existen 3 patrones para hacer esto.
+
+1. Patrón **Emisor de eventos / Destino / Despachador** : los oyentes deben hacer referencia a la fuente para suscribirse.
+2. Patrón **Publicación / Suscripción**: no necesita una referencia específica a la fuente que desencadena el evento, hay un objeto global accesible en todas partes que maneja todos los eventos.
+3. Patrón **Señales**: similar al Emisor de Eventos, pero aquí no usa cadenas aleatorias. Cada objeto que podría emitir eventos debe tener una propiedad específica con ese nombre. De esta manera, se sabe exactamente qué eventos puede emitir un objeto.
+4. [Portales](https://es.reactjs.org/docs/portals.html): proporcionan una opción de primera clase para renderizar hijos en un nodo DOM que existe por fuera de la jerarquía del DOM del componente padre.
+Puedes encontrar más información al respecto en este enlace.
+
+Otra manera de compartir datos entre componentes sin que tengan una relación padre-hijo es compartiendo un **estado global** accesible para todos los componentes de nuestra aplicación, para ello podríamos usar 2 opciones:
+
+1. **Redux**: librería externa a React para el manejo del estado.
+2. **Context**: un API interna de React que provee una forma de pasar datos a través del árbol de componentes sin tener que pasar props manualmente en cada nivel. Esta API la retomaremos cuando veamos el tema de Hooks.
+
+## Ciclo de Vida
+
+Son métodos que se ejecutan automáticamente en un **Componente de Clase**, ocurren en 3 fases:
+
+1. Montaje.
+2. Actualización.
+3. Desmontaje
+
+### Montaje
+
+Estos métodos se ejecutan cuando se crea un componente y se inserta en el arbol del DOM.
+
+- **constructor()**: Se ejecuta al crear la instancia del componente, en el constructor puedes inicializar el estado y enlazar manejadores de eventos.
+- **render()**: Es el único método requerido, cuando se ejecuta, examina el estado y las propiedades y dibuja el componente en el árbol del DOM.
+- **componentDidMount()**: Se invoca inmediatamente después de que un componente se ha insertado al árbol del DOM. Es útil para ejecutar suscripciones o peticiones asíncronas a API's, bases de datos, servicios, etc.
+
+### Actualización
+
+Estos métodos son ejecutados por cambios en el estado o las propiedades de los componentes.
+
+- **render()**: redibuja el componente cuando detecta cambios en el estado o las propiedades del componente.
+- **componentDidUpdate()**: Se ejecuta inmediatamente después de que la actualización del estado o las propiedades sucede, al igual que componenDidUpdate es un método ideal para hacer peticiones externas.
+
+### Desmontaje
+
+Estos métodos son ejecutados una vez que el componente ha sido eliminado del árbol del DOM.
+
+- **componentWillUnmount()**: Se ejecuta antes de destruir el componente del árbol del DOM, es un método útil para hacer tareas de limpieza.
+
+### ejemplo de ciclo de vida
+```js
+import React, { Component } from 'react';
+
+
+class Reloj extends Component {
+    constructor(props){
+        super(props);
+    }
+
+    //componentWillUnmount este metodo se ejecuta cuando el componente ya no exista
+    //puede ser usado para desuscribirte a servicios
+    componentWillUnmount(){
+        console.log(3,"EL componente ha sido eliminado del DOM");
+    };
+
+    render(){
+        return <h3>{this.props.hora}</h3>
+    }
+}
+
+export default class CicloVida extends Component {
+    constructor(props){
+        super(props);
+        console.log(0, "El componente se inicializa, aun NO esta en el DOM");
+
+        this.state = {
+            hora: new Date().toLocaleString(),
+            //visible servira como condicional para la activacion de componentWillUnmount
+            visible: false
+        };
+
+        this.temportizador = null;
+    };
+
+    //react nos pide que cualquier suscripcion a una base de datos o solicitar datos de una API lo hagamos en el componentDidMount
+    //por que si nosotros lo hacemos en el cosntructor cuando hagamos la peticion y la API nos responda 
+    // y ya queramos interactuar con la data hacia elementos que se van a pintar en el dom 
+    // no es correcto hacerlo en el constructor por que que compononente aun no esta en el dom
+    // cuando componentDidMount se ejecuta significa que ya esos elementos estan cargados en el dom y entonces ya se pueden hacer peticiones a APIs y cualquier cosa que requiera que previamente mis elementos esten insertados en el dom
+    componentDidMount(){
+        console.log(1,"El componente ya se encuentra en el DOM");
+    };
+
+    // componentDidUpdate adicionalmente me permite pasar las propiedades previas y el estado previo por si neceitamos trabajar con esos valores antes de actualizar el nuevo estado
+    componentDidUpdate(prevProps,prevState){
+        console.log(2,"El estado o las props del componente han cambiado");
+        console.log(prevProps);
+        console.log(prevState);
+    };
+
+    
+
+    tictac = () => {
+        this.temportizador = setInterval(()=>{
+            this.setState({
+                hora: new Date().toLocaleString()})
+        },1000)
+    };
+
+    iniciar = () =>{
+        this.tictac();
+        this.setState({
+              visible: true
+        })
+    };
+
+    detener = () =>{
+        clearInterval(this.temportizador);
+        this.setState({
+            visible: false
+      })
+    };
+    
+    render(){
+        console.log(4, "El componente se dibuja (o redibuja por algun cambio) en el DOM") 
+        return(
+            <>
+                <h2>Ciclo de Vida de los Componentes</h2>
+                {this.state.visible && <Reloj hora={this.state.hora}/>}
+                <button onClick={this.iniciar}>Iniciar</button>
+                <button onClick={this.detener}>Detener</button>
+            </>
+        )
+    }
+}
+```
+
+## Peticiones Asíncronas (AJAX y API's)
+```js
+import React, { Component } from 'react';
+
+function Pokemon (props){
+    return(
+        <figure>
+            <img src={props.avatar} alt={props.name}/>
+            <figcaption>{props.name}</figcaption>
+        </figure>
+    )
+}
+
+export default class AjacApis extends Component {
+    state = {
+        pokemons:[]
+    };
+
+    componentDidMount(){
+        let url = "https://pokeapi.co/api/v2/pokemon/"
+        fetch(url)
+        .then(res => res.json())
+        .then(json => {
+            json.resuls.forEach(el =>{
+                fetch(el.url)
+                .then(res => res.json())
+                .then(json =>{
+                    let pokemon = {
+                        id: json.id,
+                        name: json.name,
+                        avatar: json.sprite.front_default
+                    };
+
+                    let pokemons = [...this.state.pokemons, pokemon];
+
+                    this.setState({pokemons});
+                })
+            })
+        })
+    }
+
+    render(){
+        return(
+            <>
+            <h2>Peticiones Asincrones en Componentes de clase</h2>
+            {this.state.pokemons.map(el => <Pokemon key={el.id} name={el.name} avatar={el.avatar} />)}
+            </>
+        )
+    }
+};
+
+```
+
+## Hooks
