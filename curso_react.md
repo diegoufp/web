@@ -1362,3 +1362,445 @@ export default class AjacApis extends Component {
 ```
 
 ## Hooks
+
+Los Hooks son una nueva incorporación a partir de **React 16.8.0**, que nos permiten **"enganchar"** el estado y el ciclo de vida en componentes basados en funciones.
+
+### ¿Por qué se crearon los Hooks?
+
+**Las clases confunden a las personas y a las máquinas.**
+
+Entender la estructura y reglas que implican crear una clase puede ser una curva de aprendizaje lenta y requerir de ciertos conceptos, como el manejo de this en JavaScript, por el contrario las funciones son muy fáciles de entender y manipular incluso para personas que van comenzando.
+
+A las máquinas tampoco les gusta las clases ya que no minifican tan bien como las funciones, esto significa que nuestro código ocupará más texto y por ende más espacio de almacenamiento.
+
+### Preguntas frecuentes
+
+- ¿Los hooks hacen que mi aplicación sea más rápida? **NO**.
+- ¿Los hooks hacen algo que un Componente de Clase no pueda hacer? **NO**.
+- ¿Los Componentes de Clase van a desaparecer? **NO**.
+- ¿Mi conocimiento del estado, las propiedades y los eventos serán obsoleto ahora con hooks? **NO**.
+- ¿Debo reescribir todas mis aplicaciones React, ahora con hooks? **Probablemente NO**.
+- ¿Debo implementar hooks en mi próximo proyecto? **Probablemente SÍ**.
+
+### Tipos de Hooks
+
+- Básicos (en el 100% de tus proyectos):
+    - useState.
+    - useEffect.
+- Avanzados (tal vez no en todos tus proyectos):
+    - useContext.
+    - useRef.
+    - useReducer.
+    - useCallback.
+    - useMemo.
+
+Puedes ver toda la lista de hooks disponibles en la [documentación](https://reactjs.org/docs/hooks-reference.html) de React.
+
+En este artículo explicaremos los hooks:
+
+- useState.
+- useEffect.
+
+## Hook useState
+
+Permite manipular el estado de un componente funcional, se comporta como el objeto state y a la función this.setState de los componentes de clase.
+
+Para usarlo, debemos importarlo desde la librería de React.
+```js
+import React, { useState } from "react";
+```
+
+Ahora, en nuestro componente funcional, vamos a inicializar el hook, para ello asignaremos mediante la **destructuración de arreglos** 2 elementos:
+
+El valor del estado y,
+Un método para actualizarlo
+Adicionalmente le pasaremos como parámetro el valor inicial del estado al método useState.
+```js
+import React, { useState } from "react";
+
+export default function Componente() {
+  const [valor, setValor] = useState(0);
+
+  return <span>El valor del componente es {valor}</span>;
+}
+```
+
+Para actualizar el estado tenemos que utilizar el método resultante de la destructuración de useState y pasarle el nuevo valor.
+
+```js
+import React, { useState } from "react";
+
+export default function Componente() {
+  const [valor, setValor] = useState(0);
+  return (
+    <div>
+      <span>El valor del componente es {valor}</span>
+      <button onClick={() => setValor(valor + 1)}>Aumentar valor</button>
+    </div>
+  );
+}
+```
+
+Un detalle del estado en los Hooks, es que no debe ser tratado como un objeto como en los componentes de clases, si necesitas más de un valor cada uno debe ser almacenado en una variable diferente y usar la destructurción de useState.
+
+```js
+import React, { useState } from "react";
+
+export default function Componente() {
+  const [valor, setValor] = useState(0);
+  const [valor2, setValor2] = useState("Hola Mundo");
+  const [valor3, setValor3] = useState(true);
+
+  return (
+    <div>
+      <span>El valor del componente es {valor}</span>
+      <button onClick={() => setValor(valor + 1)}>Aumentar valor</button>
+    </div>
+  );
+}
+```
+
+### Ejemplo de Hook useState
+```js
+import React, { useState } from 'react';
+
+export default function ContadorHooks(){
+    // useState puede recibir cualquier tipo de dato:
+    // string,boolean,arreglo,objeto
+    const {contador, setContador} = useState(0); 
+
+    const sumar = () => setContador(contador + 1);
+    const restar = () => setContador(contador - 1);
+
+    return (
+        <>
+        <h2>Hooks -useState</h2>
+        <nav>
+            <button onClick={sumar}>+</button>
+            <button onClick={restar}>-</button>
+        </nav>
+        <p>Contador de {props.titulo}</p>
+        <h3>{contador}</h3>
+        </>
+    )
+};
+
+// Para agregar una prop por defecto:
+ContadorHooks.defaultProps = {
+    titulo:"Clicks"
+}
+```
+
+## Hook useEffect
+
+Permite hacer uso del ciclo de vida en un componente funcional. Usar useEffect equivale a la combinación de los métodos:
+
+- componentDidMount() (montaje).
+- componentDidUpdate() (actualización).
+- componentWillUnmount() (desmontaje).
+
+useEffect recibe como parámetro una función que se ejecutará cada vez que nuestro componente se renderice, ya sea por cambios del estado o las propiedades.
+
+Para usarlo, debemos importarlo desde la librería de React.
+```js
+import React, { useEffect } from "react";
+```
+
+Para añadir un efecto que se ejecutará cada vez que nuestro componente se renderice, se debe pasar como parámetro una función al hook useEffect misma que se ejecutará al renderizarse el componente.
+
+```js
+import React, { useEffect } from "react";
+
+export default function Efecto() {
+  useEffect(function () {
+    console.log("Me he renderizado!!!");
+  });
+
+  return <span>Este es un ejemplo del hook useEffect.</span>;
+}
+```
+Con useEffect también podemos suscribirnos y desuscribirnos a eventos, temporizadores, servicios, API's, etc.
+
+Para ello hay que escribir el código de la suscripción en el cuerpo de la función de useEffect y para evitar problemas de rendimiento o aumento indiscriminado de la memoria y recursos de nuestra aplicación retornar en una función el código que desuscriba o cancele lo que se ejecuto en el cuerpo de la función.
+
+```js
+import React, { useEffect, useState } from "react";
+
+export default function ScrollYNavegador() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    //Creamos una función para actualizar el estado
+    const actualizarScrollY = () => {
+      let scrollY = window.pageYOffset;
+      console.log(`scrollY: ${scrollY}`);
+      setScrollY(scrollY);
+    };
+    //Actualizamos el scroll al montar el componente
+    actualizarScrollY();
+    //Nos suscribimos al evento scroll de window
+    window.addEventListener("scroll", actualizarScrollY);
+
+    //Devolvemos una función para desuscribir el evento
+    return () => {
+      window.removeEventListener("scroll", actualizarScrollY);
+    };
+  });
+
+  return (
+    <div>
+      <span>ScrollY del Navegador: {scrollY}px</span>
+    </div>
+  );
+}
+```
+
+Por defecto los efectos se ejecutan cada vez que se realiza un renderizado, si queremos evitar actualizaciones innecesarias o indiscriminadas podemos pasarle un segundo parámetro al hook.
+
+El parámetro debe ser un array con todos los valores de los que dependerá el efecto, de forma que sólo se ejecutará cuando ese valor cambie.
+
+```js
+import React, { useEffect, useState } from "react";
+
+export default function ScrollYNavegador() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    //Creamos una función para actualizar el estado
+    const actualizarScrollY = () => {
+      let scrollY = window.pageYOffset;
+      console.log(`scrollY: ${scrollY}`);
+      setScrollY(scrollY);
+    };
+    //Actualizamos el scroll al montar el componente
+    actualizarScrollY();
+    //Nos suscribimos al evento scroll de window
+    window.addEventListener("scroll", actualizarScrollY);
+
+    //Devolvemos una función para desuscribir el evento
+    return () => {
+      window.removeEventListener("scroll", actualizarScrollY);
+    };
+  }, [scrollY]);
+
+  return (
+    <div>
+      <span>ScrollY del Navegador: {scrollY}px</span>
+    </div>
+  );
+}
+```
+
+Si le pasamos un array vacío, eso hará que el efecto no dependa de ningún valor, por lo que sólo se ejecutará al montarse y desmontarse el componente.
+```js
+import React, { useEffect, useState } from "react";
+
+export default function ScrollYNavegador() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    //Creamos una función para actualizar el estado
+    const actualizarScrollY = () => {
+      let scrollY = window.pageYOffset;
+      console.log(`scrollY: ${scrollY}`);
+      setScrollY(scrollY);
+    };
+    //Actualizamos el scroll al montar el componente
+    actualizarScrollY();
+    //Nos suscribimos al evento scroll de window
+    window.addEventListener("scroll", actualizarScrollY);
+
+    //Devolvemos una función para desuscribir el evento
+    return () => {
+      window.removeEventListener("scroll", actualizarScrollY);
+    };
+  }, []);
+
+  return (
+    <div>
+      <span>ScrollY del Navegador: {scrollY}px</span>
+    </div>
+  );
+}
+```
+
+### Ejemplos de  Hook useEffect
+
+```js
+import React, {useEffect,useState} from 'react';
+
+export default function ScrollHook(){
+    const {scrollY, setScrollY} = useState(0);
+    // const {name,setName} = useState("Jon");
+
+    //puedes tener tantos useEffects como necesites 
+    useEffect(()=>{
+        // Cada vez que se necesite renderizar este componente
+        //useEffect va a ejecutar todo lo que este en esta funcion  
+        console.log("Fase de Actualizacion")
+        const detectarScroll = () => setScrollY(window.pageYOffset);
+        
+        window.addEventListener('scroll', detectarScroll);
+
+        //cuando este componente ya no exista en el ui   
+        return ()=> {
+            window.removeEventListener('scroll', detectarScroll);
+            console.log("Fase de Desmontaje");
+        }
+    }, [scrollY]);
+
+    useEffect(() => {
+        console.log("Fase de Montaje");
+        // el segundo parametro que le podmeos pasar a useEffect son las dependencias que se van a estar revisando
+        // estas dependencyList es un arreglo
+        // cuando tu le pasas alguna variable de estado que quieras estar controlando eso significa que este useEffect solamente se va a ejecutar cuando la variable cambie
+        // RECOMENDACION:
+        //si tu necesitas que que una peticion como es el caso de solicitar servicios o apis externas solamente se ejecute una vez entonces...
+        // lo que te recomienda react es dejar el arreglo vacio
+    }, []);
+     
+
+    useEffect(() => {
+        console.log("Fase de Actualizacion");
+    });
+
+    useEffect(() => {
+        console.log("Fase de Desmontaje");
+        // cuando a un useEffect le agregas la sintaxis de que retorne una funcion 
+        return ()=>{
+            //aqui es una buena oportunidad para desuscribirte de servicios
+            // desconectarte de apis
+            //limpiar intervalos de tiempos
+            //limpiar menejadores de eventos de componentes que dejaron de existir
+        }
+    });
+
+    return(
+        <>
+            <h2>Hooks - useEffect y el Ciclo de vida</h2>
+            <p>Scroll Y del navegador {scrollY}</p>
+        </>
+    );
+}
+
+```
+
+**Ejemplo 2**
+
+```js
+import React, { useEffect, useState } from 'react';
+
+function Reloj({hora}){
+    return <h3>{hora}</h3>
+}
+
+export default function RelojHooks(){
+    const {hora, setHora} = useState(new Date().toLocaleTimeString());
+    const {visible, setVisible} = useState(false);
+  
+    useEffect(()=>{
+        let temporizador;
+
+        if(visible){
+            temporizador = setInterval(()=>{
+                setHora(new Date().toLocaleTimeString());
+            },1000);
+        }else{
+            clearInterval(temporizador);
+
+        }
+        return () =>{
+        console.log("Fase de Desmontaje");
+        clearInterval(temporizador);
+        }; 
+        //esta function solamente esta ejecutandose cuando hay un cambio en la variable visible
+    },[visible])
+
+    return(
+        <>
+            <h2>Reloj con Hooks</h2>
+            {visible && <Reloj hora={hora}/>}
+            <button onClick={()=> setVisible(true)}>Iniciar</button>
+            <button onClick={()=> setVisible(false)}>Detener</button>
+        </>
+    )
+};
+```
+
+## Peticiones Asíncronas con Hooks (AJAX y API's)
+
+```js
+import React, { useState, useEffect } from 'react';
+
+
+function Pokemon ({avatar,name}){
+    return(
+        <figure>
+            <img src={avatar} alt={name}/>
+            <figcaption>{name}</figcaption>
+        </figure>
+    )
+}
+
+export default function AjaxHooks(){
+    const {pokemons,setPokemons} = useState([])
+
+    /*useEffect(()=>{
+        let url = "https://pokeapi.co/api/v2/pokemon/"
+        fetch(url)
+        .then(res => res.json())
+        .then(json => {
+            json.resuls.forEach(el =>{
+                fetch(el.url)
+                .then(res => res.json())
+                .then(json =>{
+                    let pokemon = {
+                        id: json.id,
+                        name: json.name,
+                        avatar: json.sprite.front_default
+                    };
+
+                    //para no tener una variable intermediaria podemos lanzar en formato de funcion de felcha la actualizacion del estado(setState = setPokemons)
+                    setPokemons((pokemons)=>[...pokemons,pokemon])
+                })
+            })
+        })
+    },[]);*/
+
+    //funciones asincronas con fetch
+    // es una mala practica volver asincrono a useEfect(se deja comentado el async para mostrar lo que no se debe hacer).
+    
+    useEffect(/*async */()=>{
+        const getPokemons = async (url) =>{
+            // si necesitas hacer peticiones asincronas dentro de un useEffect es mejor crear una function expresada dentro de la funcion flecha del useEffect
+            let res = await fetch(url);
+            let json = await res.json();
+
+            json.resuls.forEach(async el =>{
+                let res = await fetch(el.url);
+                let json = await res.json();
+
+                let pokemon = {
+                    id:json.id,
+                    name: json.name,
+                    avatar: json.sprite.front_default
+                };
+                setPokemons((pokemons)=>[...pokemons,pokemon]);
+                });
+            
+        };
+        getPokemons("https://pokeapi.co/api/v2/pokemon/");
+
+        
+    },[]);
+
+    return(
+        <>
+            <h2>Peticiones Asincrones en Hooks</h2>
+            {pokemons.length === 0 ? (<h3>Cargando...</h3>): (
+                pokemons.map(el => <Pokemon key={el.id} name={el.name} avatar={el.avatar} />)
+            )}
+        </>
+    )
+}
+```
