@@ -1804,3 +1804,621 @@ export default function AjaxHooks(){
     )
 }
 ```
+
+## [Custom Hooks](https://es.reactjs.org/docs/hooks-custom.html)
+
+Para que react sepa que es un hook personalizado el hook tiene que empezar con la palabra **use**.
+
+En este caso el nombre del archivo de la funcion sera `use.Fetch.js`:
+```js
+import { useState, useEffect } from 'react';
+
+// no importamos react por que lo que vamos a hacer no va a ser un componente funcional
+//sino que va a ser solamente una funcion
+export const useFetch =(url)=>{
+    const {data,setData} = useState(null);
+    const {isPending, setIsPending} = useState(true);
+    const {error,setError} = useState(null);//esta va a ser la manipulacion del error
+
+    useEffect(() => {
+        const getData = async (url)=> {
+            try {
+                let res = await fetch(url);
+                if(!res.ok){
+                    throw {
+                        err : true, 
+                        status : res.status, statusText: res.statusText || "Ocurrio un error"
+                    };
+                };
+                let data = await res.json();
+                setIsPending(false);
+                setData(data);
+                setError({err:false})
+            } catch (err) {
+                setIsPending(true);
+                //no se esta actualizando en setData por si llega a ocurrir un error con las peticiones aun asi conserva los valores anteriores
+                setError({err:true})
+            }
+        };
+
+        getData(url);
+    },[url])
+
+    //un hooks personalizado tiene que retornar ciertos valores
+    return {data,isPending,error}
+}
+
+```
+
+Con este hooks personalizado ahora podemos hacer peticiones a apis de manera mas rapida
+```js
+import React from 'react';
+import { useFetch } from '../hooks/useFetch';
+
+export default function HooksPersonalizados (){
+    let url = "https://pokeapi.co/api/v2/pokemon/";
+
+    let {data,isPending, error} = useFetch(url);
+
+    return(
+        <>
+            <h2>Hooks HooksPersonalizados</h2>
+            <h3>{JSON.stringify(isPending)}</h3>
+            <h3><mark>{JSON.stringify(error)}</mark></h3>
+            <h3>
+                {/*whiteSpace:"pre-wrap" permite que rompa cuando haya un espacio en blanco */}
+                <pre style={{whiteSpace:"pre-wrap" }}
+                <code>{JSON.stringify(data)}</code>
+            </h3>
+        </>
+    )
+}
+```
+
+## [Referencias](https://es.reactjs.org/docs/refs-and-the-dom.html)
+
+Las referencias es la manera en que nos permite react poder controlar un elemento que ya ha sido cargado en el dom.
+
+**Cuando usar referencias**
+Existen unos cuantos buenos casos de uso para referencias:
+
+- Controlar enfoques, selección de texto, o reproducción de medios.
+- Activar animaciones imperativas.
+- Integración con bibliotecas DOM de terceros.
+Evita usar referencias en cualquier cosa que pueda ser hecha declarativamente.
+
+Por ejemplo, en lugar de exponer los métodos open() y close() en un componente Dialog, pasa una propiedad isOpen a este en su lugar.
+
+Esto es lo que no tienes que hacer:
+```js
+import React from 'react';
+
+export default function Referencias(){
+    const handleToggleMenu = (e) =>{
+        const $menu = document.getElementById("menu");
+        if(e.target.textContent === "Menu"){
+            e.target.textContent = "Cerrar";
+            $menu.style.display="block";
+        }else{
+            e.target.textContent = "Menu";
+            $menu.style.display="none";
+        };
+    };
+
+    return(
+        <>
+            <h2>Referencias</h2>
+            <button id="menu-btn" onClick={handleToggleMenu}>Menu</button>
+            <nav id="menu" style={{display:none}}>
+                <a href="#">Seccion1</a>
+                <br/>
+                <a href="#">Seccion2</a>
+                <br/>
+                <a href="#">Seccion3</a>
+                <br/>
+                <a href="#">Seccion4</a>
+                <br/>
+                <a href="#">Seccion5</a>
+            </nav>
+        </>
+    )
+};
+```
+
+La manera correcta de hacerlo es:
+```js
+import React,{createRef, useRef} from 'react';
+// no se puede usar createRef en un componente funcional
+//si tienes un componente de clase usa createRef
+//si tienes un hook(componente funcional) usa useRef 
+
+export default function Referencias(){
+    //cuando trabajamos con referencias a las variables las inicializamos con ref
+    let refMenu = useRef();
+    let refMenuBtn = useRef();
+
+    const handleToggleMenu = (e) =>{
+        /*
+        const $menu = document.getElementById("menu");
+        if(e.target.textContent === "Menu"){
+            e.target.textContent = "Cerrar";
+            $menu.style.display="block";
+        }else{
+            e.target.textContent = "Menu";
+            $menu.style.display="none";
+        };*/
+        if(refMenuBtn.current.textContent === "Menu"){
+            refMenuBtn.current.textContent = "Cerrar";
+            refMenu.current.style.display="block";
+        }else{
+            refMenuBtn.current.textContent = "Menu";
+            refMenu.current.style.display="none";
+        };
+        //cuando tengamos que manupular sobretodo la visivilidad de elementos que ya estan cargados en el dom y que no tenemos que redibujar.
+    };
+
+    return(
+        <>
+            <h2>Referencias</h2>
+            <button id="menu-btn" ref={refMenuBtn} onClick={handleToggleMenu}>Menu</button>
+            <nav id="menu" ref={refMenu} style={{display:none}}>
+                <a href="#">Seccion1</a>
+                <br/>
+                <a href="#">Seccion2</a>
+                <br/>
+                <a href="#">Seccion3</a>
+                <br/>
+                <a href="#">Seccion4</a>
+                <br/>
+                <a href="#">Seccion5</a>
+            </nav>
+        </>
+    )
+};
+```
+
+## Formularios
+Existen los formularios **no controlados** que serian hacerlos de la manera del tema anterior(referencias), sin embargo no es la manera mas recomendada.
+
+La otra manera de hacer un formulario es hacer que los elementos del formulario esten gestionados por el estado del componente, a esto se le llama **formularios controlados**.
+
+```js
+import React, { useState } from 'react';
+
+export default function Formularios(){
+    //lo que nos recomienda react para trabajar el manejo del estado es crear una variable de estado y asignarsela al input
+    const {nombre,setNombre}= useState("");
+    
+
+
+    return(
+        <>
+            <h2>Formularios</h2>
+            <form>
+                <label htmlFor="nombre">Nombre</label>
+                {/*Es buena practica que los input tengan el atributo name asi podemos acceder a ellos mediante el punto */}
+                {/* si utilizamos la etiqueta value tenemos que asignar el evento onChange para el cambio de estado */}
+                <input type="text" id="nombre" name="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)}/>
+            </form>
+        </>
+    )
+}
+```
+```js
+import React, { useState } from 'react';
+
+export default function Formularios(){
+    const {nombre,setNombre}= useState("");
+    const {sabor, setSabor} = useState("");
+    const {lenguaje,setLenguaje} = useState("");
+    const {terminos,setTerminos} = useState(false);
+
+    const handleSubmit = e=>{
+        e.preventDefault();
+
+    }
+
+    return(
+        <>
+            <h2>Formularios</h2>
+            <form onSubmit={handleSubmit}>
+                <label htmlFor="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)}/>
+            
+            <p>Elige tu Sabor JS Favorito:</p>
+            <input type="radio" id="vanilla" name="sabor" value="vanilla" onChange={e => setSabor(e.target.value)} defaultChecked/>
+            {/*defaultChecked: sirve para que en el primer renderizado uno de los imputs este chekeado, en html es checked pero es react es defaultChecked */}
+            <label htmlFor="vanilla">Vanilla</label>
+            <input type="radio" id="react" name="sabor" value="react" onChange={e => setSabor(e.target.value)}/>
+            <label htmlFor="react">React</label>
+
+            <p>Elige tu lenguaje de programacion favorito</p>
+            <select name="lenguaje" onChange={e => setLenguaje(e.target.value)} defaultValue="">
+                {/*si quieres un valor por defecto para el select lo podemos hacer con la propiedad defaultValue */}
+                <option value="">---</option>
+                <option value="js">JavaScript</option>
+                <option value="py">Python</option>
+                <option value="go">GO</option>
+            </select>
+            <br/>
+
+            <label htmlFor="teminos">Acepto terminos y condiciones</label>
+            <input type="checkbox" id="terminos" name="terminos" onChange={e => setTerminos(e.target.checked)} />
+
+            <br/>
+            <input type="submit"/>
+
+            </form>
+        </>
+    )
+}
+```
+
+En lugar de tener una variable de estado por cada input se puede hacer con una sola variable de estado.
+```js
+export default function Formularios(){
+    const {form,setForm}= useState({});
+
+    const handleChange = e =>{
+        //este handleChange va a ser la funcion que se le va a asignar al evento onChange de todos los elementos del formulario que decida vincular a alguna de las propiedades de la variable form
+        //es muy importante que los elementos del fomulario tenga el atributo name 
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
+            // y asi de simple podemos tener un formulario con 1000 elementos de formulario con el mismo change y estar actualizando el estado en una sola variable 
+        });
+    };
+
+    const handleChecked = (e) =>{
+        setForm({
+            ...form,
+            [e.target.name]: e.target.checked
+            //esto serviria para almanar los valores que sean booleanos
+        })
+    }
+
+    const handleSubmit = e=>{
+        e.preventDefault();
+
+    }
+
+    return(
+        <>
+            <h2>Formularios</h2>
+            <form onSubmit={handleSubmit}>
+                <label htmlFor="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" value={form.nombre} onChange={handleChange}/>
+            
+            <p>Elige tu Sabor JS Favorito:</p>
+            <input type="radio" id="vanilla" name="sabor" value="vanilla" onChange={handleChange} defaultChecked/>
+            <label htmlFor="vanilla">Vanilla</label>
+            <input type="radio" id="react" name="sabor" value="react" onChange={handleChange}/>
+            <label htmlFor="react">React</label>
+
+            <p>Elige tu lenguaje de programacion favorito</p>
+            <select name="lenguaje" onChange={handleChange} defaultValue="">
+                <option value="">---</option>
+                <option value="js">JavaScript</option>
+                <option value="py">Python</option>
+                <option value="go">GO</option>
+            </select>
+            <br/>
+
+            <label htmlFor="teminos">Acepto terminos y condiciones</label>
+            <input type="checkbox" id="terminos" name="terminos" onChange={handleChecked} />
+
+            <br/>
+            <input type="submit"/>
+
+            </form>
+        </>
+    )
+};
+```
+
+## Estilos CSS
+Para agregar estilos css la primera opcion siempre es crear un archivo .css e importarlo en js como si fuera un modulo.
+```css
+/*css*/
+.estilos h3{
+    padding: 2rem;
+    text-align: center;
+}
+
+.bg-react {
+    background-color: #61dafb;
+}
+```
+```js
+/* js */
+import React from 'react';
+import "../css/Estilos.css"
+
+export default function Estilos(){
+    return(
+        <section className="estilos">
+            <h2>EStilos CSS en React</h2>
+            <h3 className="bg-react ">EStilos en hoja CSS externa</h3>
+        </section>
+    );
+}
+``` 
+
+Otra forma es mandar a llamar los estilos en linea
+```js
+import React from 'react';
+import "../css/Estilos.css"
+
+export default function Estilos(){
+    let myStyles={
+        borderRadius: ".5rem",
+        margin: "2rem auto",
+        maxWidth: "50%"
+    }
+
+
+    return(
+        <section className="estilos">
+            <h2>EStilos CSS en React</h2>
+            <h3 className="bg-react ">EStilos en hoja CSS externa</h3>
+            <h3 className="bg-react" style={{borderRadius:".25rem", margin: "1rem"}}>Estilos en linea (atributo style)</h3>
+            <h3 className="bg-react" style={myStyles}>Estilos en linea</h3>
+        </section>
+    );
+};
+```
+
+**Normalize**
+Podemos agregar la hoja de estilos normalize con `@import-normalize` en el archivo de css(en el archivo principal de css):
+```css
+@import-normalize;
+
+.estilos h3{
+    padding: 2rem;
+    text-align: center;
+}
+
+.bg-react {
+    background-color: #61dafb;
+}
+```
+
+
+**Estilos como modulos**
+Si queremos tratar las hojas de estilos css como si fueran modulos entonces tiene que tener la siguiente sintaxis de nombre:
+
+```
+nombre_que_quieras.module.css
+```
+```css
+/*csc*/
+.error{
+    background-color: #dc3545;
+}
+
+.success{
+    background-color: #198754;
+}
+```
+```js
+//js
+/* eslint-disable jsx-a11y/heading-has-content */
+import React from 'react';
+import "../css/Estilos.css";
+//tenemos que mandar a importar la hoja de estilos module
+// en moduleStyles se van a almacenar todos los selectores que tenga la hoja de estilos 
+import moduleStyles from "../css/Estilos.module.css"
+
+export default function Estilos(){
+    let myStyles={
+        borderRadius: ".5rem",
+        margin: "2rem auto",
+        maxWidth: "50%"
+    }
+
+
+    return(
+        <section className="estilos">
+            <h2>EStilos CSS en React</h2>
+            <h3 className="bg-react ">EStilos en hoja CSS externa</h3>
+            <h3 className="bg-react" style={{borderRadius:".25rem", margin: "1rem"}}>Estilos en linea (atributo style)</h3>
+            <h3 className="bg-react" style={myStyles}>Estilos en linea</h3>
+            <h3 className={moduleStyles.error}>EStilos con Modulos</h3>
+            <h3 className={moduleStyles.success}>EStilos con Modulos</h3>
+
+        </section>
+    );
+};
+```
+Una de las cosas que tiene esta tecnica de los modulos es que si miramos el inspector de elementos y revisamos el nombre de estas clases podemos observar que le da un nombre aleatorio. ESto ayuda a que sea mas especifico el nombre del selector y estar evitando errores de cascada.
+
+## [Styled Components](https://styled-components.com/)
+
+Esta libreria nos va a permitir tener presentacion/contenido/logica de programacion de un mismo componente en un solo archivo para ello vamos a hacer uso de la libreria [Styled Components](https://styled-components.com/).
+
+Para instalarlo ejecutamos:
+```
+npm install --save styled-components
+```
+
+Tambien es recomedable instalar en el vsc la libreria `styled-components-snippets` de Jon Wheeler. Lo que va hacer es interpretar el color de la libreria y no veamos como cadena de texto los estilos.
+
+creamos un archivo nuevo .js
+Esta seria la **sintaxis** inicial de como usar styled:
+```js
+import React from 'react';
+import styled from 'styled-components';
+
+export default function ComponentesEStilizados(){
+    const MyH3 = styled.h3`
+        padding: 2rem;
+        text-align: center;    
+    `;
+
+    return(
+        <>
+            <h2>Styled-Components</h2>
+            <MyH3> estilizado con styled-components</MyH3>
+        </>
+    )
+}
+```
+
+Pero tambien se pueden usar **variable y funciones**:
+```js
+import React from 'react';
+import styled from 'styled-components';
+
+export default function ComponentesEStilizados(){
+    let mainColor = "#db7093",
+    mainAlphaColor80 = "#db709380";
+    const setTransitionTime = (tiempo) => `all ${tiempo} ease-in-out`;
+
+    const MyH3 = styled.h3`
+        padding: 2rem;
+        text-align: center;  
+        background-color: ${mainColor};
+        transition: ${setTransitionTime(".5s")};
+
+        &:hover{
+            /*el mismo h3 pero en hover */
+            background-color: ${mainAlphaColor80}
+        }  
+    `;
+
+    return(
+        <>
+            <h2>Styled-Components</h2>
+            <MyH3> estilizado con styled-components</MyH3>
+        </>
+    )
+}
+```
+
+Tambien se le pueden **pasar propiedades**:
+```js
+import React from 'react';
+import styled from 'styled-components';
+
+export default function ComponentesEStilizados(){
+    let mainColor = "#db7093",
+    mainAlphaColor80 = "#db709380";
+    const setTransitionTime = (tiempo) => `all ${tiempo} ease-in-out`;
+
+    const MyH3 = styled.h3`
+        padding: 2rem;
+        text-align: center;  
+        color: ${({color}) => color || "#000"};/*Aqui se le esta pasando la propiedad */
+        background-color: ${mainColor};
+        transition: ${setTransitionTime(".5s")};
+
+        &:hover{
+            /*el mismo h3 pero en hover */
+            background-color: ${mainAlphaColor80}
+        }  
+    `;
+
+    return(
+        <>
+            <h2>Styled-Components</h2>
+            <MyH3> estilizado con styled-components</MyH3>
+            <MyH3 color="#61dafb">estilizado con styled-components</MyH3>
+        </>
+    )
+}
+```
+
+**styled-components dentro de styled-components**:
+```js
+import React from 'react';
+import styled,{css} from 'styled-components'; //vamos a llamar tambien a css de la misma libreria
+// css funciona para utilizar styled-components dentro de styled-components
+
+export default function ComponentesEStilizados(){
+    let mainColor = "#db7093",
+    mainAlphaColor80 = "#db709380";
+    const setTransitionTime = (tiempo) => `all ${tiempo} ease-in-out`;
+
+    const MyH3 = styled.h3`
+        padding: 2rem;
+        text-align: center;  
+        color: ${({color}) => color || "#000"};
+        background-color: ${mainColor};
+        transition: ${setTransitionTime(".5s")};
+
+        /*aqui le estamos diciendo que si existe la propiedad isButton entonces aplique los siguientes estilos */
+        ${({isButton}) => isButton && css`
+            margin: auto;
+            max-width: 50%;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        `};
+
+        &:hover{
+            background-color: ${mainAlphaColor80}
+        }  
+    `;
+
+    return(
+        <>
+            <h2>Styled-Components</h2>
+            <MyH3> estilizado con styled-components</MyH3>
+            <MyH3 color="#61dafb">estilizado con styled-components</MyH3>
+            <MyH3 isButton>h3 estilizado como boton</MyH3>
+        </>
+    )
+}
+```
+**animaciones y keyframes**
+```js
+import React from 'react';
+import styled,{css, keyframes} from 'styled-components'; 
+
+export default function ComponentesEStilizados(){
+    let mainColor = "#db7093",
+    mainAlphaColor80 = "#db709380";
+    const setTransitionTime = (tiempo) => `all ${tiempo} ease-in-out`;
+
+    const fadeIn = keyframes`
+        0%{
+            opacity: 0;
+        }
+        100%{
+            opacity: 1;
+        }
+    `;
+
+    const MyH3 = styled.h3`
+        padding: 2rem;
+        text-align: center;  
+        color: ${({color}) => color || "#000"};
+        background-color: ${mainColor};
+        transition: ${setTransitionTime(".5s")};
+        animation: ${fadeIn} 5s ease-out;
+
+        ${({isButton}) => isButton && css`
+            margin: auto;
+            max-width: 50%;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        `};
+
+        &:hover{
+            background-color: ${mainAlphaColor80}
+        }  
+    `;
+
+    return(
+        <>
+            <h2>Styled-Components</h2>
+            <MyH3> estilizado con styled-components</MyH3>
+            <MyH3 color="#61dafb">estilizado con styled-components</MyH3>
+            <MyH3 isButton>h3 estilizado como boton</MyH3>
+        </>
+    )
+}
+```
+
+- `ThemeProvider`: contexto para temas
+- `createGlobalStyle`: nos permite crear estilos globales que vana  aplicar para toda la aplicacion(reseteo global de estilos)
+- `styled()`: nos permite heredar los estilos de otro componente.
