@@ -483,3 +483,86 @@ npm start
 ## Manejo de archivos
 
 ## optimizacion de imagenes
+
+## React
+
+Tenemos que instalar dependencias de produccion con el comando:
+```
+npm install react react-dom 
+```
+- `react-dom`: permite agregar al dom la aplicacion que desarrollemos con react.
+
+En la carpeta de `package.json` podemos ver como se instalaron las dependencias en `dependencies` y no en `devDependencies`:
+```json
+"dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
+  }
+```
+En el `webpack.confing.js` tenemos que hacerle una peque;a modificacion para que acepte tanto archivos .js como .jsx .
+```js
+module.exports ={
+    module: {
+        rules: [
+            {   //paso de /\.js$/i a /\.jsx?$/i
+                test: /\.jsx?$/i,
+                exclude: /node_modules/,
+                use: {
+                    loader:"babel-loader"
+                }
+            },
+            {
+                test: /\.html$/i,
+                use:[
+                    {
+                        loader:"html-loader",
+                        options: {
+                            minimize:true
+                        }
+                    }
+                ]
+            },
+            {
+                test: /\.css$/i,
+                use: [MinicssExtractPlugin.loader, "css-loader"]
+            }
+        ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./public/index.html",
+            filename: "./index.html"
+        }),
+        new MinicssExtractPlugin()
+    ]
+}
+```
+
+Ahora hacer falta instalar los presets para que babel pueda transpilar el codigo jsx. Asi que tenemos que instalar como dependencia de desarrollo:
+```
+npm install -D @babel/preset-react
+```
+
+y en el archivo `.babelrc` tenemos que agregar el preset de react:
+```json
+{
+    "presets": ["@babel/preset-env","@babel/preset-react"]
+}
+```
+
+ahora para conectar un achivo react al html podemos hacerlo asi:
+```js
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+
+//reactDOM te pide el componente que quiere renderizar
+// el regundo parametro que te pide es el elmento donde vamos a implantar la aplicacion react 
+ReactDOM.render(
+    <>
+      <App />
+    </>,
+    document.getElementById('app')
+  );
+```

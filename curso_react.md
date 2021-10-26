@@ -2422,3 +2422,163 @@ export default function ComponentesEStilizados(){
 - `ThemeProvider`: contexto para temas
 - `createGlobalStyle`: nos permite crear estilos globales que vana  aplicar para toda la aplicacion(reseteo global de estilos)
 - `styled()`: nos permite heredar los estilos de otro componente.
+
+## CRUD App: Creación de componentes y renderizado de datos
+
+### 1/4
+- `Apps.js`:
+```js
+import React from "react";
+import CrudApp from "./components/CrudApp";
+
+function App() {
+  return (
+    <>
+      <h1>Ejercicios con React</h1>
+      <CrudApp/>
+    </>
+  );
+}
+
+export default App;
+```
+
+- `CrudApps.js`:
+```js
+import React, { useState } from 'react';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+const initialDb = [
+    {
+        id: 1,
+        name: "Seiya",
+        constellation: "Pegaso"
+    },
+    {
+        id: 2,
+        name: "Shiryu",
+        constellation: "Dragon"
+    },
+    {
+        id: 3,
+        name: "Hyoga",
+        constellation: "Cisne"
+    },
+    {
+        id: 4,
+        name: "Shun",
+        constellation: "Andromeda"
+    },
+    {
+        id: 5,
+        name: "Ikki",
+        constellation: "Fenix"
+    },
+    
+];  
+
+const CrudApp = () => {
+    const [db, setdb] = useState(initialDb)
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm/>
+            <CrudTable data={db}/>
+        </div>
+    );
+};
+
+export default CrudApp;
+```
+- `CrudForm.js`:
+```js
+import React, { useState, useEffect } from 'react';
+ 
+    const initialForm = {
+        name:"",
+        constellation: "",
+        id: null
+    };
+
+const CrudForm = () => {
+        const [form, setform] = useState(initialForm);
+
+    const handleChange = (e) =>{
+        /* function para los input text*/
+    };
+
+    const handleSubmit = (e) =>{
+        /* function para el submit del formulario*/
+    };
+
+    const handleReset = (e) =>{
+        /* function para el boton de limpieza*/
+    }
+
+    return (
+        <div>
+            <h3>Agregar</h3>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Nombre" onChange={handleChange} value={form.name}/>
+                <input type="text" name="constellation" placeholder="Constelacion" onChange={handleChange} value={form.constellation}/>
+                <input type="submit" value="Enviar"/>
+                <input type="reset" value="Limpiar" onClick={handleReset}/>
+            </form>
+        </div>
+    )
+};
+
+export default CrudForm;
+```
+
+- `CrudTable.js`:
+```js
+import React from 'react'
+import CrudTableRow from './CrudTableRow';
+
+const CrudTable = ({data}) => {
+    return (
+        <div>
+            <h3>Tabla de Datos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cosntelacion</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.length === 0 
+                    ? <tr><td colSpan="3">Sin datos</td></tr> 
+                    : data.map((el) => <CrudTableRow key={el.id} el={el}/>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default CrudTable;
+```
+
+- `CrudTableRow.js`:
+```js
+import React from 'react'
+
+const CrudTableRow = ({el}) => {
+    return (
+        <tr>
+            <td>{el.name}</td>
+            <td>{el.constellation}</td>
+            <td>
+                <button>Editar</button>
+                <button>Eliminar</button> 
+            </td>
+        </tr>
+    )
+}
+
+export default CrudTableRow
+```
