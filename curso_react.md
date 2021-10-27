@@ -2582,3 +2582,694 @@ const CrudTableRow = ({el}) => {
 
 export default CrudTableRow
 ```
+### 2/4
+ya que tenemos la estructura incial hora debemos comprender como debemos crear la estrategia para ir actualizando cada una de las operaciones del crud.
+- `CrudApp.js`:
+```js
+import React, { useState } from 'react';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+const initialDb = [
+    {
+        id: 1,
+        name: "Seiya",
+        constellation: "Pegaso"
+    },
+    {
+        id: 2,
+        name: "Shiryu",
+        constellation: "Dragon"
+    },
+    {
+        id: 3,
+        name: "Hyoga",
+        constellation: "Cisne"
+    },
+    {
+        id: 4,
+        name: "Shun",
+        constellation: "Andromeda"
+    },
+    {
+        id: 5,
+        name: "Ikki",
+        constellation: "Fenix"
+    },
+    
+];  
+
+const CrudApp = () => {
+    const [db, setDb] = useState(initialDb);
+    //neceitamos una variable de estado que me permita saber si va a ser una funcion de insercion o de actualizacion :
+    const [dataToEdit, setDataToEdit] = useState(null);//cuando este null significa que vamos a hacer una insercion y cuando sea true vamos a hacer una actualizacion
+    const createData =(data)=>{
+        //en lugar de descargar una dependencia que genere id unicos,como por ejemplo uniteId, podemos usar Date.now() para crear un id provicional unico
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{};
+    const deleteData = (id)=>{}
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+        </div>
+    );
+};
+
+export default CrudApp;
+```
+
+- `CrudForm.js`:
+```js
+import React, { useState, useEffect } from 'react';
+ 
+    const initialForm = {
+        name:"",
+        constellation: "",
+        id: null
+    };
+
+const CrudForm = ({createData, updateData, dataToEdit, setDataToEdit}) => {
+        const [form, setForm] = useState(initialForm);
+
+    const handleChange = (e) =>{
+        /* function para los input text*/
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
+        })
+    };
+
+    const handleSubmit = (e) =>{
+        /* function para el submit del formulario*/
+        e.preventDefault();
+        if(!form.name || !form.constellation){
+            alert("Datos incompletos");
+            return;
+        };
+
+        if(form.id === null){
+             createData(form);
+        }else{
+            updateData(form);
+        };
+
+        handleReset();
+    };
+
+    const handleReset = (e) =>{
+        /* function para el boton de limpieza*/
+        setForm(initialForm);
+        setDataToEdit(null);
+    }
+
+    return (
+        <div>
+            <h3>Agregar</h3>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Nombre" onChange={handleChange} value={form.name}/>
+                <input type="text" name="constellation" placeholder="Constelacion" onChange={handleChange} value={form.constellation}/>
+                <input type="submit" value="Enviar"/>
+                <input type="reset" value="Limpiar" onClick={handleReset}/>
+            </form>
+        </div>
+    )
+};
+
+export default CrudForm;
+```
+
+### 3/4
+- `CrudApps.js`:
+```js
+import React, { useState } from 'react';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+const initialDb = [
+    {
+        id: 1,
+        name: "Seiya",
+        constellation: "Pegaso"
+    },
+    {
+        id: 2,
+        name: "Shiryu",
+        constellation: "Dragon"
+    },
+    {
+        id: 3,
+        name: "Hyoga",
+        constellation: "Cisne"
+    },
+    {
+        id: 4,
+        name: "Shun",
+        constellation: "Andromeda"
+    },
+    {
+        id: 5,
+        name: "Ikki",
+        constellation: "Fenix"
+    },
+    
+];  
+
+const CrudApp = () => {
+    const [db, setDb] = useState(initialDb);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    const createData =(data)=>{
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{
+        let newData = db.map(el => el.id === data.id ? data : el);
+        setDb(newData); 
+    };
+    const deleteData = (id)=>{}
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+        </div>
+    );
+};
+
+export default CrudApp;
+```
+- `CrudForm.js`:
+```js
+import React, { useState, useEffect } from 'react';
+ 
+    const initialForm = {
+        name:"",
+        constellation: "",
+        id: null
+    };
+
+const CrudForm = ({createData, updateData, dataToEdit, setDataToEdit}) => {
+    const [form, setForm] = useState(initialForm);
+
+    useEffect(() => {
+        if(dataToEdit){
+            setForm(dataToEdit);
+        }else{
+            setForm(initialForm);
+        }
+    },[dataToEdit]);
+
+    const handleChange = (e) =>{
+        /* function para los input text*/
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
+        })
+    };
+
+    const handleSubmit = (e) =>{
+        /* function para el submit del formulario*/
+        e.preventDefault();
+        if(!form.name || !form.constellation){
+            alert("Datos incompletos");
+            return;
+        };
+
+        if(form.id === null){
+             createData(form);
+        }else{
+            updateData(form);
+        };
+
+        handleReset();
+    };
+
+    const handleReset = (e) =>{
+        /* function para el boton de limpieza*/
+        setForm(initialForm);
+        setDataToEdit(null);
+    }
+
+    return (
+        <div>
+            <h3>{dataToEdit ? "Editar" : "Agregar"}</h3>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Nombre" onChange={handleChange} value={form.name}/>
+                <input type="text" name="constellation" placeholder="Constelacion" onChange={handleChange} value={form.constellation}/>
+                <input type="submit" value="Enviar"/>
+                <input type="reset" value="Limpiar" onClick={handleReset}/>
+            </form>
+        </div>
+    )
+};
+
+export default CrudForm;
+```
+- `CrudTable.js`:
+```js
+import React from 'react'
+import CrudTableRow from './CrudTableRow';
+
+const CrudTable = ({data,setDataToEdit, deleteData}) => {
+    return (
+        <div>
+            <h3>Tabla de Datos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cosntelacion</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.length === 0 
+                    ? <tr><td colSpan="3">Sin datos</td></tr> 
+                    : data.map((el) => <CrudTableRow key={el.id} el={el} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default CrudTable;
+```
+- `CrudTableRow.js`:
+```js
+import React from 'react'
+
+const CrudTableRow = ({el, setDataToEdit, deleteData}) => {
+    let {name,constellation,id} = el;
+    return (
+        <tr>
+            <td>{name}</td>
+            <td>{constellation}</td>
+            <td>
+                <button onClick={() => setDataToEdit(el)}>Editar</button>
+                <button onClick={() => deleteData(id)}>Eliminar</button> 
+            </td>
+        </tr>
+    )
+}
+
+export default CrudTableRow
+
+```
+### 4/4
+- `CrudApps`:
+```js
+import React, { useState } from 'react';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+const initialDb = [
+    {
+        id: 1,
+        name: "Seiya",
+        constellation: "Pegaso"
+    },
+    {
+        id: 2,
+        name: "Shiryu",
+        constellation: "Dragon"
+    },
+    {
+        id: 3,
+        name: "Hyoga",
+        constellation: "Cisne"
+    },
+    {
+        id: 4,
+        name: "Shun",
+        constellation: "Andromeda"
+    },
+    {
+        id: 5,
+        name: "Ikki",
+        constellation: "Fenix"
+    },
+    
+];  
+
+const CrudApp = () => {
+    const [db, setDb] = useState(initialDb);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    const createData =(data)=>{
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{
+        let newData = db.map(el => el.id === data.id ? data : el);
+        setDb(newData); 
+    };
+    const deleteData = (id)=>{
+        let isDelete = window.confirm(`Estas segundo de eliminar el registro con el id "${id}"?`);
+        if(isDelete){
+            let newData = db.filter(el => el.id !== id);
+            setDb(newData);
+        }else{
+            return;
+        }
+    }
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+        </div>
+    );
+};
+
+export default CrudApp;
+```
+
+- `CrudForm.js`:
+```js
+import React, { useState, useEffect } from 'react';
+ 
+    const initialForm = {
+        name:"",
+        constellation: "",
+        id: null
+    };
+
+const CrudForm = ({createData, updateData, dataToEdit, setDataToEdit}) => {
+    const [form, setForm] = useState(initialForm);
+
+    useEffect(() => {
+        if(dataToEdit){
+            setForm(dataToEdit);
+        }else{
+            setForm(initialForm);
+        }
+    },[dataToEdit]);
+
+    const handleChange = (e) =>{
+        /* function para los input text*/
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value
+        })
+    };
+
+    const handleSubmit = (e) =>{
+        /* function para el submit del formulario*/
+        e.preventDefault();
+        if(!form.name || !form.constellation){
+            alert("Datos incompletos");
+            return;
+        };
+
+        if(form.id === null){
+             createData(form);
+        }else{
+            updateData(form);
+        };
+
+        handleReset();
+    };
+
+    const handleReset = (e) =>{
+        /* function para el boton de limpieza*/
+        setForm(initialForm);
+        setDataToEdit(null);
+    }
+
+    return (
+        <div>
+            <h3>{dataToEdit ? "Editar" : "Agregar"}</h3>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Nombre" onChange={handleChange} value={form.name}/>
+                <input type="text" name="constellation" placeholder="Constelacion" onChange={handleChange} value={form.constellation}/>
+                <input type="submit" value="Enviar"/>
+                <input type="reset" value="Limpiar" onClick={handleReset}/>
+            </form>
+        </div>
+    )
+};
+
+export default CrudForm;
+```
+- `CrudTable.js`:
+```js
+import React from 'react'
+import CrudTableRow from './CrudTableRow';
+
+const CrudTable = ({data,setDataToEdit, deleteData}) => {
+    return (
+        <div>
+            <h3>Tabla de Datos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cosntelacion</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.length === 0 
+                    ? <tr><td colSpan="3">Sin datos</td></tr> 
+                    : data.map((el) => <CrudTableRow key={el.id} el={el} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default CrudTable;
+```
+- `CrudTableRow.js`:
+```js
+import React from 'react'
+
+const CrudTableRow = ({el, setDataToEdit, deleteData}) => {
+    let {name,constellation,id} = el;
+    return (
+        <tr>
+            <td>{name}</td>
+            <td>{constellation}</td>
+            <td>
+                <button onClick={() => setDataToEdit(el)}>Editar</button>
+                <button onClick={() => deleteData(id)}>Eliminar</button> 
+            </td>
+        </tr>
+    )
+}
+
+export default CrudTableRow
+```
+
+## CRUD API: Creando una API con JSON Server
+Vamos a hacer:
+- Un componente de mensajes(nos va a permitir enviar mensajes de exito y mensajes de error cada vez que hagamos una transaccion)
+- Vamos a crear un componente de loader que nos permita interactuar hasta que se cargen por completo los datos de la api.
+## 1/5
+- `db.json`:
+```json
+{
+    "santos": [
+        {
+            "id": 1,
+            "name": "Seiya",
+            "constellation": "Pegaso"
+        },
+        {
+            "id": 2,
+            "name": "Shiryu",
+            "constellation": "Dragon"
+        },
+        {
+            "id": 3,
+            "name": "Hyoga",
+            "constellation": "Cisne"
+        },
+        {
+            "id": 4,
+            "name": "Shun",
+            "constellation": "Andromeda"
+        },
+        {
+            "id": 5,
+            "name": "Ikki",
+            "constellation": "Fenix"
+        }
+    ]
+}
+```
+
+- podemos crear un comando para ejecutar el inicio de json-server:
+En el archivo de `package.json` del webpack en `scripts` ingresamos:
+```
+"fake-api":"json-server --watch src/api/db.json --port 3000"
+```
+`--watch`: me indica la ruta donde esta el archivo que simula la base de datos
+
+- `CrudApi.js`:
+```js
+import React, { useState } from 'react';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+
+
+const CrudApi = () => {
+    const [db, setDb] = useState([]);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    const createData =(data)=>{
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{
+        let newData = db.map(el => el.id === data.id ? data : el);
+        setDb(newData); 
+    };
+    const deleteData = (id)=>{
+        let isDelete = window.confirm(`Estas segundo de eliminar el registro con el id "${id}"?`);
+        if(isDelete){
+            let newData = db.filter(el => el.id !== id);
+            setDb(newData);
+        }else{
+            return;
+        }
+    }
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+        </div>
+    );
+};
+
+export default CrudApi;
+```
+
+### 2/5
+Un helper podria ser una funcion que te ayuda a resolver una tarea mas enfocada a logica abstracta que de ui.
+
+[AbortController]("https://developer.mozilla.org/en-US/docs/Web/API/AbortController")
+
+Haremos un helper para hacer peticiones a apis con fetch:
+- `helpHttp.js`:
+```js
+export const helpHttp = () => {
+    //peticion fetch
+    const customFetch = (endpoint,options) => {
+        const defaultHeader = {
+            //cabeceras
+            accept:"application/json"
+        };
+
+        /*AbortController: sirve  para cuando la peticion fetch detecta que no hay
+        una respuesta del servidor aborta la peticion*/ 
+        const controller = new AbortController();
+        options.signal = controller.signal;
+
+        options.method = options.method || "GET";
+        options.headers = options.headers ? {...defaultHeader, ...options.headers} : defaultHeader;
+
+        //convertir el objeto a cadena
+        options.body = JSON.stringify(options.body) || false;
+        if(!options.body) delete options.body;/*en las peticiones no puedes mandar la opcion del body falsa asi que creamos este if para que borre la propiedad con delete */
+
+        setTimeout(() => controller.abort(), 3000);
+
+        return fetch(endpoint,options).then(res => res.ok ? res.json() : Promise.reject({
+            err:true,
+            status: res.status || "00",
+            statusText: res.statusText || "Ocurrio un error"
+        })).catch(err => err);
+    };
+
+    const get = (url, options = {}) => customFetch(url,options);
+
+    const post = (url,options={}) =>{
+        options.method = "POST";
+        return customFetch(url, options);
+    };
+
+    const put = (url,options={}) =>{
+        options.method = "PUT";
+        return customFetch(url, options);
+    };
+
+    const del = (url,options={}) =>{
+        options.method = "DELETE";
+        return customFetch(url, options);
+    };
+
+    return {
+        get,post,put,del
+    }
+}
+```
+
+### 3/5
+
+Recordar iniciar el servidor de json-server y de app:
+- `CrudApi.js`:
+```js
+import React, { useState, useEffect } from 'react';
+import { helpHttp } from '../helpers/helpHttp';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+
+
+
+const CrudApi = () => {
+    const [db, setDb] = useState([]);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    
+    let api = helpHttp();
+    let url = "http://localhost:3000/santos";
+    
+    useEffect(() => {
+        api.get(url).then(res =>{
+            if(!res.err){
+                setDb(res);
+            }else{
+                setDb(null)
+            }
+        })
+    },[])
+
+
+    const createData =(data)=>{
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{
+        let newData = db.map(el => el.id === data.id ? data : el);
+        setDb(newData); 
+    };
+    const deleteData = (id)=>{
+        let isDelete = window.confirm(`Estas segundo de eliminar el registro con el id "${id}"?`);
+        if(isDelete){
+            let newData = db.filter(el => el.id !== id);
+            setDb(newData);
+        }else{
+            return;
+        }
+    }
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>
+        </div>
+    );
+};
+
+export default CrudApi;
+```
