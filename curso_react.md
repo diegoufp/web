@@ -3157,7 +3157,7 @@ export default CrudApi;
 ### 2/5
 Un helper podria ser una funcion que te ayuda a resolver una tarea mas enfocada a logica abstracta que de ui.
 
-[AbortController]("https://developer.mozilla.org/en-US/docs/Web/API/AbortController")
+[AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController)
 
 Haremos un helper para hacer peticiones a apis con fetch:
 - `helpHttp.js`:
@@ -3272,4 +3272,171 @@ const CrudApi = () => {
 };
 
 export default CrudApi;
+```
+
+### 4/5 : Implementando Loaders y Mensajes de errores
+[loading.io](https://loading.io/) : Es una pagina que tiene varios louders animados con diferentes tecnologias. Existe una seccion de loaders con puro codigo css [Pure CSS Loaders](https://loading.io/css/).
+
+- `App.js`:
+```js
+import React from "react";
+import CrudApi from "./components/CrudApi";
+import CrudApp from "./components/CrudApp";
+
+function App() {
+  return (
+    <>
+      <h1>Ejercicios con React</h1>
+      <hr/>
+      <CrudApi/>
+      <hr/>
+      <CrudApp/>
+    </>
+  );
+}
+
+export default App;
+```
+- `CrudApi.js`:
+```js
+import React, { useState, useEffect } from 'react';
+import { helpHttp } from '../helpers/helpHttp';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+import Loader from './Loader';
+import Message from './Message';
+
+
+
+const CrudApi = () => {
+    const [db, setDb] = useState(null);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    
+    //let api = helpHttp();
+    let url = "http://localhost:3000/santos";
+    
+    useEffect(() => {
+        /*antes de hacer la peticion se actualizara loading */
+        setLoading(true);
+        helpHttp().get(url).then(res =>{
+            if(!res.err){
+                setDb(res);
+                setError(null);
+            }else{
+                setDb(null);
+                /*Si hay un error */
+                setError(res);
+            }
+        });
+
+        /*Cuando obtengamos los datos de la peticion entonces se quitaria el loading */
+        setLoading(false);
+    },[url /*si hubieramos tratado de agregar la variable api aqui entonces saldria un error infinito en el nacegador */]);
+
+
+    const createData =(data)=>{
+        data.id= Date.now();
+        setDb([...db, data]);
+    };
+    const updateData = (data)=>{
+        let newData = db.map(el => el.id === data.id ? data : el);
+        setDb(newData); 
+    };
+    const deleteData = (id)=>{
+        let isDelete = window.confirm(`Estas segundo de eliminar el registro con el id "${id}"?`);
+        if(isDelete){
+            let newData = db.filter(el => el.id !== id);
+            setDb(newData);
+        }else{
+            return;
+        }
+    }
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            {/*La tabla siempre va a estar disponible(crudForm) */}
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            {loading && <Loader/>}
+            {error && <Message msg={`Error ${error.status}: ${error.statusText}`} bgColor="dc3545"/>}
+            {/*si db es nulo entonces no se carga el componente CrudTable */}
+            {db && <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>}
+        </div>
+    );
+};
+
+export default CrudApi;
+```
+- `Loader.js`:
+```js
+import React from 'react';
+import "./Loader.css";
+
+const Loader = () => {
+    return (
+        <div>
+            <h2>Loader</h2>
+            <div className="lds-circle"><div></div></div>
+        </div>
+    )
+}
+
+export default Loader;
+```
+
+- `Loader.css`:
+```css
+.lds-circle {
+    display: inline-block;
+    transform: translateZ(1px);
+  }
+  .lds-circle > div {
+    display: inline-block;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border-radius: 50%;
+    background: #000;
+    animation: lds-circle 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+  }
+  @keyframes lds-circle {
+    0%, 100% {
+      animation-timing-function: cubic-bezier(0.5, 0, 1, 0.5);
+    }
+    0% {
+      transform: rotateY(0deg);
+    }
+    50% {
+      transform: rotateY(1800deg);
+      animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1);
+    }
+    100% {
+      transform: rotateY(3600deg);
+    }
+  }
+```
+- `Message.js`:
+```js
+import React from 'react'
+
+const Message = ({msg,bgColor}) => {
+    let styles ={
+        padding:"1rem",
+        marginBottom:"1rem",
+        textAlign:"center",
+        color: "#fff",
+        fontWeight: "bold",
+        backgroundColor: `${bgColor}`
+    }
+    return (
+        <div style={styles}>
+            <p>{msg}</p>
+        </div>
+    )
+}
+
+export default Message;
+
 ```
