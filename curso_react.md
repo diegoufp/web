@@ -3440,3 +3440,132 @@ const Message = ({msg,bgColor}) => {
 export default Message;
 
 ```
+### 5/5
+- `CrudApi.js`:
+```js
+import React, { useState, useEffect } from 'react';
+import { helpHttp } from '../helpers/helpHttp';
+import CrudForm from './CrudForm';
+import CrudTable from './CrudTable';
+import Loader from './Loader';
+import Message from './Message';
+
+
+
+const CrudApi = () => {
+    const [db, setDb] = useState(null);
+    const [dataToEdit, setDataToEdit] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+    
+    let api = helpHttp();
+    let url = "http://localhost:3000/santos";
+    
+    useEffect(() => {
+        /*antes de hacer la peticion se actualizara loading */
+        setLoading(true);
+        helpHttp().get(url).then(res =>{
+            if(!res.err){
+                setDb(res);
+                setError(null);
+            }else{
+                setDb(null);
+                /*Si hay un error */
+                setError(res);
+            }
+        });
+
+        /*Cuando obtengamos los datos de la peticion entonces se quitaria el loading */
+        setLoading(false);
+    },[url /*si hubieramos tratado de agregar la variable api aqui entonces saldria un error infinito en el nacegador */]);
+
+
+    const createData =(data)=>{
+        data.id= Date.now();
+        let options = {body:data,headers:{"content-type": "application/json"}};
+        api.post(url,options).then((res) =>{
+            if(!res.err){
+                setDb([...db, res]);
+            }else{
+                setError(res);
+            }
+        })
+    };
+
+    const updateData = (data)=>{
+        let endpoint = `${url}/${data.id}`;
+        let options = {body:data,headers:{"content-type": "application/json"}};
+        api.put(endpoint, options).then((res) =>{
+            if(!res.err){
+                let newData = db.map((el)=> el.id ===data.id ?data :el);
+                setDb(newData);
+            }else{
+                setError(res);
+            }
+        })
+        
+    };
+
+    const deleteData = (id)=>{
+        let isDelete = window.confirm(`Estas segundo de eliminar el registro con el id "${id}"?`);
+        if(isDelete){
+            let options = {"content-type": "application/json"};
+            let endpoint = `${url}/${id}`;
+            api.del(endpoint,options).then(res=>{
+                if(!res.err){
+                    let newData = db.filter(el => el.id !== id);
+                    setDb(newData);
+                }else{
+                    setError(res);
+                }
+            })
+        }else{
+            return;
+        }
+    }
+    ;
+    return (
+        <div>
+            <h2>CRUD App</h2>
+            {/*La tabla siempre va a estar disponible(crudForm) */}
+            <CrudForm createData={createData} updateData={updateData} dataToEdit={dataToEdit} setDataToEdit={setDataToEdit}/>
+            {loading && <Loader/>}
+            {error && <Message msg={`Error ${error.status}: ${error.statusText}`} bgColor="dc3545"/>}
+            {/*si db es nulo entonces no se carga el componente CrudTable */}
+            {db && <CrudTable data={db} setDataToEdit={setDataToEdit} deleteData={deleteData}/>}
+        </div>
+    );
+};
+
+export default CrudApi;
+```
+- `Cr udTable.js`:
+```js
+import React from 'react'
+import CrudTableRow from './CrudTableRow';
+
+const CrudTable = ({data,setDataToEdit, deleteData}) => {
+    return (
+        <div>
+            <h3>Tabla de Datos</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Cosntelacion</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {data.length > 0 
+                    ? data.map((el) => <CrudTableRow key={el.id} el={el} setDataToEdit={setDataToEdit} deleteData={deleteData}/>)
+                    :  <tr><td colSpan="3">Sin datos</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    )
+}
+
+export default CrudTable;
+```
