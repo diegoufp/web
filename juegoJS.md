@@ -693,7 +693,959 @@ export default function HyperCubo({divRef}){
         animate();
         return() =>{
             currentRef.removeChild(renderer.domElement);
-            //window.removeEventListener("resize",resize);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### Axis Helper and Grid 
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 6;
+        camera.position.x = 6;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        const geometry = new THREE.BoxGeometry(1,1,1);
+        const material = new THREE.MeshPhongMaterial({color: 0x0f2c64});
+        const cube= new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        camera.lookAt(cube.position);
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const clock = new THREE.Clock();
+        const animate =() =>{
+            const elapsedTime = clock.getElapsedTime();
+            cube.rotation.x = elapsedTime;
+            cube.rotation.y = elapsedTime;
+            cube.position.y = Math.sin(elapsedTime);
+            
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        // Axes helper
+        // lo que nos ayuda es a agregar a escena las lineas de ejes x,y,z
+        // THREE.AxesHelper toma como parametro que tanto van a medir las lineas de los ejes
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        //Grid Helper
+        //la grilla que se dibuja en la base
+        const size = 10;
+        const divisions = 10;
+        const gridHelper = new THREE.GridHelper(size,divisions);
+        scene.add(gridHelper);
+
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### Geometry
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        const geometry = new THREE.BoxGeometry(1,1,1,2,2,2);
+        const material = new THREE.MeshPhongMaterial({color: 0x0f2c64, wireframe: true});
+        const cube= new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        //podemos mover al cubo:
+        cube.position.set(1,1,1);
+        // cada geometria tiene divisiones
+        // si queremos agregar mas subdiviones en el cubo, podemos hacerlo de la siguiente manera:
+        // const geometry = new THREE.BoxGeometry(1,1,1,2,2,2);
+        // por defecto el cubo tiene una subdivision de 1 pero se puede modificar a 2 o mas subdiviones, este parametros se agregan despues de agregar las medidas del cubo, subtivisionx,subdivisiony,subdivisionz
+        // activar las opcion de wareframe ayudara a que se vean mejor las subdivisiones
+        //const material = new THREE.MeshPhongMaterial({color: 0x0f2c64, wireframe: true});
+        camera.lookAt(cube.position);
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const clock = new THREE.Clock();
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        const size = 10;
+        const divisions = 10;
+        const gridHelper = new THREE.GridHelper(size,divisions);
+        scene.add(gridHelper);
+
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### BufferGeometry
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //cubo con Buffer Geometry
+        // buffer geometry es mucho mas facil para nuestro equipo manejarla, si la escena sencilla se recomienda usar geometry y si la escena es mas compleja entonces se recomienda usar bufferGeometry, incluso cuando importamos modelos 3d como blender se utiliza buffergeometry
+        const geometry = new THREE.BoxBufferGeometry(1,1,1,2,2,2);
+        const material = new THREE.MeshBasicMaterial({color: 0x0f2c64, wireframe: true});
+        const cube= new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        cube.position.set(1,1,1);
+        camera.lookAt(cube.position);
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const clock = new THREE.Clock();
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        const size = 10;
+        const divisions = 10;
+        const gridHelper = new THREE.GridHelper(size,divisions);
+        scene.add(gridHelper);
+
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+Si observamos mejor el objeto js del `geometry` podemos ver que tiene varios atributos:
+- `normal`: ES para saber donde esta apuntando cada cara 
+- `position` : indica donde esta colocado cada punto de nuestro cubo, es decir cada vertise
+- `uv` :son coordenadas uv que nos ayudan a asignarle texturas.
+
+### Vertexs
+
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //vertices
+        const material = new THREE.MeshBasicMaterial({color: 0x0f2c64, wireframe: true});
+        //aqui no estamos inficando si es un cubo, una esfera, etc. Solamente estamos declarando BufferGeometry, necesitamos crearle atributos a este tipo de geometria
+        const faceGeometry = new THREE.BufferGeometry();
+        //para generarle este tipo actributos necesitamos declarar un tipo especial de array el cual se llama Float32Array
+        // este tipo de array somanete acepta tipos de valor flotante, en este caso le hemos puesto valores tipo entero pero se les puede poner valores flotantes
+        // los valores del array es donde va a ser colocado cada vertice, normalmente esta dividido por coordenadas de 3 puntos, cada uno de estos puntos reprecenta x,y,z
+        const facePoints = new Float32Array([
+            0,0,0,
+            0,1,0,
+            1,1,0
+        ]);
+        //despues de crear la posicion de los puntos ahora necesitamos crear el atributo
+        // recibe dos parametros, los puntos y cuantos datos va a utilizar para generar una cordenada, en este caso son 3 uno para x, otro para y , otro para z
+        const facePointsPosition = new THREE.BufferAttribute(facePoints, 3);
+        // y finalmente a faceGeometry tenemos que asignarle este atributo
+        // debemos de llamarlo psoition, si lo llamamos de otro nombre no va a funcionar
+        faceGeometry.setAttribute("position", facePointsPosition);
+        //ahora necitamos crear lo que es la mesh
+        const cube= new THREE.Mesh(faceGeometry, material);
+        scene.add(cube);
+        // se ha generado un triangulo
+        camera.lookAt(cube.position);
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const clock = new THREE.Clock();
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        const size = 10;
+        const divisions = 10;
+        const gridHelper = new THREE.GridHelper(size,divisions);
+        scene.add(gridHelper);
+
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+La desventaja es que es muy tedioso crear figuras de esta manera, la mejor foma es crear una figura en un mejor programa 3d.
+
+### Particles
+```JS
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Particles
+        const count = 1000; // numero de particulas que queremos en escena.
+        const particlesPositions = new Float32Array(count * 3);// una particula utiliza 3 datos para generar una coordenada
+        for (let i = 0;i< count * 3; i++){
+            particlesPositions[i] = Math.random() * (-5 - 5 + 1) + 5;
+        };
+        //finalmente declaramos el atributo, las posiciones y cuantos datos va a tulizar cada coordenada
+        const particlesAttribute = new THREE.BufferAttribute(particlesPositions,3);
+        //creamos la geometria
+        const particlesGeometry = new THREE.BufferGeometry();
+        particlesGeometry.setAttribute("position", particlesAttribute);
+
+        // la creacion del material es diferente para este caso
+        const particlesMaterial = new THREE.PointsMaterial({color: 0xff0000});
+
+        //la mesh en esta ocacion se declara como POINTS
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+        camera.lookAt(particles.position);
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const clock = new THREE.Clock();
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+
+        const size = 10;
+        const divisions = 10;
+        const gridHelper = new THREE.GridHelper(size,divisions);
+        scene.add(gridHelper);
+
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### MeshBasicMaterial
+
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        try {
+            const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Material
+        const material = new THREE.MeshBasicMaterial();
+        // al material podemos pasarle un color:
+        material.color = new THREE.Color(0x5b00ff);
+        //podemos activar la opcion de wireframe, la cual nos permiten ver las aristas
+        //material.wireframe =  true;
+        // tambien tenemos las opciones de transparent y opacity, si los usamos juntos podemos ver atravez de los objetos
+        //material.transparent = true;
+        //material.opacity = 0.5;
+
+        //cube
+        const cubeGeopetry = new THREE.BoxBufferGeometry(1,1,1);
+        const cube = new THREE.Mesh(cubeGeopetry, material);
+        cube.position.set(-3,0,0);
+
+        const torusGeopetry = new THREE.TorusBufferGeometry(0.5,0.2,16,32);
+        const torus = new THREE.Mesh(torusGeopetry, material);
+        torus.castShadow = true;
+
+        const torusKnotGeopetry = new THREE.TorusKnotBufferGeometry(0.7,0.2,50,32);
+        const torusknot = new THREE.Mesh(torusKnotGeopetry, material);
+        torusknot.position.set(3,0,0);
+
+        scene.add(cube,torus,torusknot);
+        
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        } catch (error) {
+            console.log(error)
+        }
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### MeshNormalMaterial
+
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        try {
+            const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Material
+        // puedes crear efectos interesantes usantos este marerial como degradados de colores
+        const material = new THREE.MeshNormalMaterial();
+        // podemos hacer que los angulos se vean mas marcados:
+        material.flatShading =  true;
+        
+        //cube
+        const cubeGeopetry = new THREE.BoxBufferGeometry(1,1,1);
+        const cube = new THREE.Mesh(cubeGeopetry, material);
+        cube.position.set(-3,0,0);
+
+        const torusGeopetry = new THREE.TorusBufferGeometry(0.5,0.2,16,32);
+        const torus = new THREE.Mesh(torusGeopetry, material);
+        torus.castShadow = true;
+
+        const torusKnotGeopetry = new THREE.TorusKnotBufferGeometry(0.7,0.2,50,32);
+        const torusknot = new THREE.Mesh(torusKnotGeopetry, material);
+        torusknot.position.set(3,0,0);
+
+        scene.add(cube,torus,torusknot);
+        
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        } catch (error) {
+            console.log(error)
+        }
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### MeshMatcapMaterial
+
+[Matcaps](https://github.com/nidorx/matcaps)
+
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        try {
+            const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Material
+        //por si solor MeshMatcapMaterial no tiene ningun color ni tectura para ello tenemos que descargar un matcaps
+        const material = new THREE.MeshMatcapMaterial();
+        // para usar los matcaps primero los tenemos que descargar y despues tenemos que crear una isntancia donde carge la textura
+        const textureLoader = new THREE.TextureLoader();
+        //despues tenemos que indicar la carpeta donde esta el matcap
+        const matcap = textureLoader.load("https://raw.githubusercontent.com/nidorx/matcaps/master/1024/C7C7D7_4C4E5A_818393_6C6C74.png");
+        material.matcap = matcap;
+        
+       
+        //cube
+        const cubeGeopetry = new THREE.BoxBufferGeometry(1,1,1);
+        const cube = new THREE.Mesh(cubeGeopetry, material);
+        cube.position.set(-3,0,0);
+
+        const torusGeopetry = new THREE.TorusBufferGeometry(0.5,0.2,16,32);
+        const torus = new THREE.Mesh(torusGeopetry, material);
+        torus.castShadow = true;
+
+        const torusKnotGeopetry = new THREE.TorusKnotBufferGeometry(0.7,0.2,50,32);
+        const torusknot = new THREE.Mesh(torusKnotGeopetry, material);
+        torusknot.position.set(3,0,0);
+
+        scene.add(cube,torus,torusknot);
+        
+
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 5);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 15);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        } catch (error) {
+            console.log(error)
+        }
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### MeshStandarMaterial
+
+Tenemos que ir a la pagina y descargar un en formato **HDR** [Environment Map](https://polyhaven.com/hdris) despues de descargarlo tenemos que convertirlo a formato cubemap que es el formato que acepta three.js
+
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        try {
+            const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Material
+        // es un tipo de material que necesita luces en escena para poder verse 
+        const material = new THREE.MeshStandardMaterial();
+        material.color.set("#ff000");
+        scene.background = new THREE.Color(0xeeeeee)
+        // material.metalness entre mas cercano a 1 sea su valor mas apariencia a metal va a tener
+        // cuando damos una apariencia de metal tienda a hacerse oscuro y necesita una luz para poder verse
+        // para tratar con los materiales metaliscos y evitar que se opaquen , al material necesitamos aplicarle algo que se llama  y despues convertir el formato hdri a formato cubemap
+        material.metalness = 1;
+        //material.roughness entre mas cercano a cero va a terner una apariencia mas lisa y mas cercano a 1 una apariencia mas rugosa.
+        material.roughness = 0;
+        const cubeTextureLoader = new THREE.CubeTextureLoader();
+        const evm = cubeTextureLoader.load([
+            "px",
+            "nx",
+            "py",
+            "ny",
+            "pz",
+            "nz"
+        ]);//aqui tenemos que cargar un array de imagenes
+        material.envMap =  evm;//con esto el material metalico ya estaria reflejando mas
+
+
+        //cube
+        const cubeGeopetry = new THREE.BoxBufferGeometry(1,1,1);
+        const cube = new THREE.Mesh(cubeGeopetry, material);
+        cube.position.set(-3,0,0);
+
+        const torusGeopetry = new THREE.TorusBufferGeometry(0.5,0.2,16,32);
+        const torus = new THREE.Mesh(torusGeopetry, material);
+        torus.castShadow = true;
+
+        const torusKnotGeopetry = new THREE.TorusKnotBufferGeometry(0.7,0.2,50,32);
+        const torusknot = new THREE.Mesh(torusKnotGeopetry, material);
+        torusknot.position.set(3,0,0);
+
+        scene.add(cube,torus,torusknot);
+        
+
+        const lightAm = new THREE.AmbientLight(0xff0000, 500);
+        scene.add(lightAm);
+
+        const light = new THREE.PointLight(0xff0000, 150);
+        light.position.set(8,8,8);
+        scene.add(light);
+
+
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        } catch (error) {
+            console.log(error)
+        }
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
+        }
+    },[])
+    return(
+        <div ref={refMount} style={{width: "100%", height: "100%"}}>
+
+        </div>
+    )
+};
+```
+
+### Texturas
+
+Para las texturas donde todas las caras son lo mismo esta bien este metodo, pero si necesitamos algo mas especifico entonces es mejor cargar las texturas en blender y exportar el objeto
+```js
+import React, {useRef, useState, useEffect} from 'react';
+import * as THREE from "three"; 
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+
+
+export default function HyperCubo({divRef}){
+    const refMount = useRef(null);
+
+    useEffect(() => {
+        try {
+            const currentRef = refMount.current;
+        const {clientWidth: width, clientHeight: height} = currentRef; 
+
+        const scene = new THREE.Scene(); 
+        //scene.background = new THREE.Color(0x5b00ff);
+        const camera = new THREE.PerspectiveCamera(25, width/height,0.01, 1000);
+        scene.add(camera);
+        camera.position.z = 10;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(width, height);
+        currentRef.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera,renderer.domElement);
+        controls.enableDamping = true;
+
+        //Material
+        const material = new THREE.MeshStandardMaterial();
+        //para cargar texturas:
+        const textureLoader = new THREE.TextureLoader();
+        const iron = textureLoader.load("https://lh3.googleusercontent.com/pXG5ZF3jR2cK_ZKsqOr4FH4CTSV8rbp4dQY0ri2uOmxSc8BbgiZlViWFo8SSHDJBjqKRtC0L0TzdZRGltOED4kM=s400");//tiene que tener la ruta del material
+        //despues tenemos que acceder a la propiedad map
+        material.map = iron;
+        
+
+        //cube
+        const cubeGeopetry = new THREE.BoxBufferGeometry(1,1,1);
+        const cube = new THREE.Mesh(cubeGeopetry, material);
+
+        scene.add(cube);
+        
+
+        const lightAm = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(lightAm);
+
+        /*const light = new THREE.PointLight(0xff0000, 1);
+        light.position.set(8,8,8);
+        scene.add(light);*/
+
+
+        const animate =() =>{
+            controls.update();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        };
+
+        const resize = () => {
+            const updatedWidth = currentRef.clientWidth;
+            const updateHeight = currentRef.clientHeight;
+            renderer.setSize(updatedWidth,updateHeight);
+            camera.aspect = updatedWidth/updateHeight;
+            camera.updateProjectionMatrix();
+        }
+        window.addEventListener("resize",resize);
+
+        animate();
+
+        } catch (error) {
+            console.log(error)
+        }
+        return() =>{
+            currentRef.removeChild(renderer.domElement);
+            window.removeEventListener("resize",resize);
         }
     },[])
     return(
