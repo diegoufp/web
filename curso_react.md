@@ -3569,3 +3569,196 @@ const CrudTable = ({data,setDataToEdit, deleteData}) => {
 
 export default CrudTable;
 ```
+
+## Selects Anidados
+
+###  Definición de componentes y lógica ( 1 / 3 )
+
+- `SelectsAnidados.js`:
+```js
+import React, { useState } from 'react';
+import SelectList from './SelectList';
+
+const SelectsAnidados = () => {
+    const [state, setState] = useState("");
+    const [town, setTown] = useState("");
+    const [suburb, setSuburb] = useState("");
+
+    return (
+        <div>
+            <h2>Selects Anidados</h2>
+            <h3>Mexico</h3>
+            {/*El handleChange va a estar revisando el evento de cambio del select html */}
+            <SelectList title="estados" url="" handleChange={(e) =>{setState(e.target.value)}} />
+            {state && (
+                <SelectList title="municipios" url="" handleChange={(e) =>{setTown(e.target.value)}} /> 
+            )}
+            {town && (
+                <SelectList title="colonias" url="" handleChange={(e) =>{setSuburb(e.target.value)}} /> 
+            )}
+            <pre>
+                <code>
+                    {state} - {town} - {suburb} 
+                </code>
+            </pre>
+        </div>
+    )
+}
+
+export default SelectsAnidados;
+```
+- `SelectList.js`:
+```js
+import React from 'react'
+
+const SelectList  = () => {
+    return (
+        <div>
+            <select name="" id="">
+                <option value="">---</option>
+            </select>
+        </div>
+    )
+}
+
+export default SelectList ;
+
+```
+
+### Hook personalizado para peticiones Fetch ( 2 / 3 )
+
+La ap que vamos a usar esta en se llama [COPOMEX](https://api.copomex.com/documentacion/inicio), te tienes que registar para que te den un token para que puedas usar la api o usar el token `d81a7ac7-976d-4e1e-b7d3-b1979d791b6c`.
+
+Tambien vamos a crear un hook personalizado que haga peticiones fetch y que guarde la informacion en variables de estado.
+
+Para nombrar un hook tenemos que usar el formato camelcase, es decir, la primer palabrar tiene que ser en minusculas y tiene que tener el verbo `use`.
+
+- `useFetch.js`:
+```js
+/*No es necesario mandar a llamar a react por que realmente como es un hook perosnalizado solamente va a devolvernos logica  */
+import {useState,useEffect} from "react";
+
+export const usePeticion =(url) =>{
+    const [data, setData] = useState(null);
+    const [error, setError] = useState(null);
+    const [loading, setLoading] = useState(false);
+
+    //este useEffect va hacer la peticion, cual la url cambie se va a ejecutar el efecto
+    useEffect(() => {
+        const abortController = new AbortController();
+        const signal = abortController.signal; //se;al de abortar la peticion
+
+        //lo que recomienda la gente de react es que si vamos a necesitar una peticion asyncrona la funcion que recibe el useEffect no sea asincrono por que eso es un antipatron, por eso vamos a crear una funcion asincrona dentro del useEffect
+        const fetchData = async () => {
+            // mientras que loading tengsa true se va a ver el louder (singno de cargando)
+            setLoading(true);
+            try {
+                const res = await fetch(url);
+
+                if(!res.ok){
+                    let err = new Error("Error en la peticion Fetch");
+                    err.status = res.status || "00";
+                    err.statusText = res.statusText || "Ocurrio un error";
+                    throw err; //el throw arroja el error a la parte del catch 
+                };
+
+                const json = await res.json();
+
+                if(!signal.aborted){
+                    setData(json);
+                    setError(null);
+                }
+            } catch (error) {
+                // que la peticion arroje un error no significa que ese error genere que se aborte la peticion
+                // si la se;al no es aborted significa que el erro es de otro tipo pero no de que se haya aborado la peticion fetch
+                if(!signal.aborted){
+                    setData(null);
+                    setError(error);
+                }
+            } finally {
+                if(!signal.aborted){
+                    setLoading(false);
+                }
+            }
+        }
+
+        fetchData();
+
+        return() =>{
+            //fase de desmontaje
+            AbortController.abort();
+        }
+    },[url]);
+
+    return {data,error,loading}
+};
+```
+### Selects Anidados: Renderizado de datos ( 3 / 3 )
+
+- `SelectsAnidados.js`:
+```js
+import React, { useState } from 'react';
+import SelectList from './SelectList';
+
+const SelectsAnidados = () => {
+    const [state, setState] = useState("");
+    const [town, setTown] = useState("");
+    const [suburb, setSuburb] = useState("");
+
+    const TOKEN = "d81a7ac7-976d-4e1e-b7d3-b1979d791b6c";
+
+    return (
+        <div>
+            <h2>Selects Anidados</h2>
+            <h3>Mexico</h3>
+            <SelectList title="estado" url={`https://api.copomex.com/query/get_estados?token=${TOKEN}` } handleChange={(e) =>{setState(e.target.value)}} />
+            {state && (
+                <SelectList title="municipios" url={`https://api.copomex.com/query/get_municipio_por_estado/${state}?token=${TOKEN}`} handleChange={(e) =>{setTown(e.target.value)}} /> 
+            )}
+            {town && (
+                <SelectList title="colonia" url={`https://api.copomex.com/query/get_colonia_por_municipio/${town}?token=${TOKEN}`} handleChange={(e) =>{setSuburb(e.target.value)}} /> 
+            )}
+            <pre>
+                <code>
+                    {state} - {town} - {suburb} 
+                </code>
+            </pre>
+        </div>
+    )
+}
+
+export default SelectsAnidados;
+```
+
+- `SelectList.js`:
+```js
+import React from 'react'
+import { usePeticion } from '../hooks/usePeticion';
+
+const SelectList  = ({title,url,handleChange}) => {
+    const {data,error,loading} = usePeticion(url);
+
+    if(!data)return null; //con esto evitamos renderizados de como si el select se estuviera cargando o no, para evitar repintados innecesarios
+    if(error){
+        console.log(error)
+    }
+    let id = `select-${title}`;
+    let label = title.charAt(0).toUpperCase() + title.slice(1);
+    let options = data.response[title];//te aprovecha de la propiedad title para extraer dinamicamente los datos
+
+
+    return (
+        <>
+        <label htmlFor={id}>{label}</label>
+            <select name={id} id={id} onChange={handleChange}>
+                <option value="">Elige un {title}</option>
+                {data && options.map((el)=>{
+                    <option value={el}>{el}</option>
+                })}
+            </select>
+        </>
+    )
+}
+
+export default SelectList ;
+```
