@@ -3762,3 +3762,319 @@ const SelectList  = ({title,url,handleChange}) => {
 
 export default SelectList ;
 ```
+
+## Validación Formularios
+[FormSubmit](https://formsubmit.co/) nos permite enviar informacion de un formulario a un correo electronico.
+### Definición de componentes y lógica ( 1 / 4 )
+- `ContactForm.js`:
+```js
+import React from 'react'
+import { useForm } from '../hooks/useForm';
+
+const initialForm = {};
+
+const balidationsForm = (form) =>{};
+
+const ContactForm = () => {
+    const {form,errors,loading,response,handleChange,handleBlur,handleSubmit} = useForm(initialForm,balidationsForm);
+    return (
+        <div>
+            <h2>Formulario de Contacto</h2>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Escribe tu nombre" onBlur={handleBlur} onChange={handleChange} value={form.name} required/>
+                <input type="email" name="email" placeholder="Escribe tu email" onBlur={handleBlur} onChange={handleChange} value={form.email} required/>
+                <input type="text" name="subject" placeholder="Asunto a tratar" onBlur={handleBlur} onChange={handleChange} value={form.subject} required/>
+                <textarea name="comments" cols="50" rows="5" placeholder="EScribe tus comentarios" onBlur={handleBlur} onChange={handleChange} value={form.comments} required></textarea>
+                <input type="submit" value="Enviar"/>
+            </form>
+        </div>
+    )
+}
+
+export default ContactForm;
+```
+- `useForm.js`:
+```js
+import { useState } from 'react';
+
+
+export const useForm = (initialForm,validateForm) => {
+    const [form, setForm] = useState(initialForm);
+    const [errors, setErrors] = useState({}); //si este objeto vacio no tiene ningun atributo significa que todo esta correcto y podemos enviar el formulario   
+    const [loading, setLoading] = useState(false);
+    const [response, setResponse] = useState(null); 
+
+    const handleChange = (e)=>{};
+    const handleBlur = (e)=>{};
+    const handleSubmit = (e)=>{};
+
+    return{form,errors,loading,response,handleChange,handleBlur,handleSubmit}
+};
+```
+
+### Programación de eventos ( 2 / 4 ) 
+
+- `COntactForm.js`:
+```js
+import React from 'react'
+import { useForm } from '../hooks/useForm';
+
+const initialForm = {
+    name: "",
+    email: "",
+    subject:"",
+    comments:"" 
+};
+
+const validationsForm = (form) =>{
+    let errors = {};
+
+    if(!form.name.trim()){
+        errors.name = "El campo 'Nombre' es requerido"; 
+    }
+
+    return errors;
+};
+
+const ContactForm = () => {
+    const {form,errors,loading,response,handleChange,handleBlur,handleSubmit} = useForm(initialForm,validationsForm);
+    return (
+        <div>
+            <h2>Formulario de Contacto</h2>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Escribe tu nombre" onBlur={handleBlur} onChange={handleChange} value={form.name} required/>
+                {errors.name && <p>{errors.name}</p>}
+
+                <input type="email" name="email" placeholder="Escribe tu email" onBlur={handleBlur} onChange={handleChange} value={form.email} required/>
+                {errors.email && <p>{errors.email}</p>}
+
+                <input type="text" name="subject" placeholder="Asunto a tratar" onBlur={handleBlur} onChange={handleChange} value={form.subject} required/>
+                {errors.subject && <p>{errors.subject}</p>}
+
+                <textarea name="comments" cols="50" rows="5" placeholder="EScribe tus comentarios" onBlur={handleBlur} onChange={handleChange} value={form.comments} required></textarea>
+                {errors.comments && <p>{errors.comments}</p>}
+
+                <input type="submit" value="Enviar"/>
+            </form>
+        </div>
+    )
+}
+
+export default ContactForm;
+
+```
+
+- `useForm.js`:
+```js
+import { useState } from 'react';
+
+
+export const useForm = (initialForm,validateForm) => {
+    const [form, setForm] = useState(initialForm);
+    const [errors, setErrors] = useState({}); //si este objeto vacio no tiene ningun atributo significa que todo esta correcto y podemos enviar el formulario   
+    const [loading, setLoading] = useState(false);
+    const [response, setResponse] = useState(null); 
+
+    const handleChange = (e)=>{
+        //esto lo que nos permite es tener formularios controlados  con el estado
+        // a cada que se escribe en el input la variable se va llenando
+        const {name,value} = e.target
+        setForm({
+            ...form,[name]: value 
+        });
+    };
+    const handleBlur = (e)=>{
+        handleChange(e);
+        setErrors(validateForm(form));
+    };
+    const handleSubmit = (e)=>{};
+
+    return{form,errors,loading,response,handleChange,handleBlur,handleSubmit}
+};
+
+```
+
+### Programación de validaciones ( 3 / 4 )
+- `ContactForm.js`:
+```js
+import React from 'react'
+import { useForm } from '../hooks/useForm';
+
+const initialForm = {
+    name: "",
+    email: "",
+    subject:"",
+    comments:"" 
+};
+
+const validationsForm = (form) =>{
+    let errors = {};
+    let regexName = /^[A-Za-zÑñÁáÉéÍíÓóÚúÜü\s]+$/;
+    let regexEmail = /^(\w+[/./-]?){1,}@[a-z]+[/.]\w{2,}$/;
+    let regexComments = /^.{1,255}$/;
+
+
+    if(!form.name.trim()){
+        errors.name = "El campo 'Nombre' es requerido"; 
+    }else if(!regexName.test(form.name.trim())){
+        errors.name = "EL campo 'Nombre' solo acepta letras y espacios en blanco";
+    };
+
+    if(!form.email.trim()){
+        errors.email = "El campo 'Email' es requerido";
+    }else if(!regexEmail.test(form.email.trim())){
+        errors.email = "EL campo 'Email' es incorrecto";
+    };
+
+    if(!form.subject.trim()){
+        errors.subject = "El campo 'Asunto a tratar' es requerido";
+    };
+    if(!form.comments.trim()){
+        errors.comments = "El campo 'Comentarios' es requerido";
+    }else if(!regexComments.test(form.comments.trim())){
+        errors.comments = "EL campo 'Nombre' no debe exceder los 255 caracteres";
+    }
+
+    return errors;
+};
+
+const ContactForm = () => {
+    const {form,errors,loading,response,handleChange,handleBlur,handleSubmit} = useForm(initialForm,validationsForm);
+    return (
+        <div>
+            <h2>Formulario de Contacto</h2>
+            <form onSubmit={handleSubmit}>
+                <input type="text" name="name" placeholder="Escribe tu nombre" onBlur={handleBlur} onChange={handleChange} value={form.name} required/>
+                {errors.name && <p>{errors.name}</p>}
+
+                <input type="email" name="email" placeholder="Escribe tu email" onBlur={handleBlur} onChange={handleChange} value={form.email} required/>
+                {errors.email && <p>{errors.email}</p>}
+
+                <input type="text" name="subject" placeholder="Asunto a tratar" onBlur={handleBlur} onChange={handleChange} value={form.subject} required/>
+                {errors.subject && <p>{errors.subject}</p>}
+
+                <textarea name="comments" cols="50" rows="5" placeholder="EScribe tus comentarios" onBlur={handleBlur} onChange={handleChange} value={form.comments} required></textarea>
+                {errors.comments && <p>{errors.comments}</p>}
+
+                <input type="submit" value="Enviar"/>
+            </form>
+        </div>
+    )
+}
+
+export default ContactForm;
+
+```
+### Envío de datos AJAX y API FormSubmit ( 4 / 4 )
+[FormSubmit](https://formsubmit.co/) nos permite enviar informacion de un formulario a un correo electronico.
+
+- `helpHttp.js`:
+```js
+export const helpHttp = () => {
+  const customFetch = (endpoint, options) => {
+    const defaultHeader = {
+      accept: "application/json",
+    };
+
+    const controller = new AbortController();
+    options.signal = controller.signal;
+
+    options.method = options.method || "GET";
+    options.headers = options.headers
+      ? { ...defaultHeader, ...options.headers }
+      : defaultHeader;
+
+    options.body = JSON.stringify(options.body) || false;
+    if (!options.body) delete options.body;
+
+    //console.log(options);
+    setTimeout(() => controller.abort(), 3000);
+
+    return fetch(endpoint, options)
+      .then((res) =>
+        res.ok
+          ? res.json()
+          : Promise.reject({
+              err: true,
+              status: res.status || "00",
+              statusText: res.statusText || "Ocurrió un error",
+            })
+      )
+      .catch((err) => err);
+  };
+
+  const get = (url, options = {}) => customFetch(url, options);
+
+  const post = (url, options = {}) => {
+    options.method = "POST";
+    return customFetch(url, options);
+  };
+
+  const put = (url, options = {}) => {
+    options.method = "PUT";
+    return customFetch(url, options);
+  };
+
+  const del = (url, options = {}) => {
+    options.method = "DELETE";
+    return customFetch(url, options);
+  };
+
+  return {
+    get,
+    post,
+    put,
+    del,
+  };
+};
+```
+- `useForm.js`:
+```js
+import { useState } from 'react';
+import { helpHttp } from '../helpers/helpHttp';
+
+
+export const useForm = (initialForm,validateForm) => {
+    const [form, setForm] = useState(initialForm);
+    const [errors, setErrors] = useState({});   
+    const [loading, setLoading] = useState(false);
+    const [response, setResponse] = useState(null); 
+
+    const handleChange = (e)=>{
+        
+        const {name,value} = e.target
+        setForm({
+            ...form,[name]: value 
+        });
+    };
+    const handleBlur = (e)=>{
+        handleChange(e);
+        setErrors(validateForm(form));
+    };
+    const handleSubmit = (e)=>{
+        e.preventDefault();
+        setErrors(validateForm(form));
+        if(Object.keys(errors).length === 0){
+            alert("Enviando formulario");
+            setLoading(true);
+            helpHttp().post("https://formsubmit.co/diegofernandez_001@hotmail.com",{
+                body: form,
+                headers:{
+                    "Content-Type":"application/json",
+                    "Accept":"application/json"
+                }
+            }).then(res=>{
+                setLoading(false);
+                setResponse(true);
+                setForm(initialForm);
+                setTimeout(()=> setResponse(false),5000)
+            })
+        }else{
+            return;
+        }
+    };
+
+    return{form,errors,loading,response,handleChange,handleBlur,handleSubmit}
+};
+
+```
