@@ -4078,3 +4078,176 @@ export const useForm = (initialForm,validateForm) => {
 };
 
 ```
+
+## Ventana Modal
+### La prop children de los componentes ( 1 / 3 )
+- `Modals.js`:
+```js
+import React from 'react'
+import Modal from './Modal';
+
+const Modals = () => {
+    return (
+        <div>
+            <h2>Modales</h2>
+            <button>Modal 1</button>
+            <Modal>
+                <h3>Modal 1</h3>
+            </Modal>
+        </div>
+    )
+}
+
+export default Modals;
+```
+
+- `Modal.js`:
+```js
+const Modal = ({children}) => {
+    //la propiedad children hace referencia al contendio dentro de la etiqueta, no es necesario pasarlo como una propiedad definida
+    return (
+        <article className="modal is-open">
+            <div className="modal-container">
+                <button class="modal-close">X</button>
+                {children}
+            </div>
+        </article>
+    )
+}
+
+export default Modal;
+```
+
+### Estilos y lógica del componente ( 2 / 3 )
+- `Modals.js`:
+```js
+import React from 'react'
+import { useModal } from '../hooks/useModal';
+import Modal from './Modal';
+
+
+const Modals = () => {
+    const [isOpenModal1, openModal1,closeModal1] = useModal(false);
+    const [isOpenModal2, openModal2,closeModal2] = useModal(false);
+
+
+    return (
+        <div>
+            <h2>Modales</h2>
+            <button>Modal 1</button>
+            <Modal>
+                <h3>Modal 1</h3>
+            </Modal>
+        </div>
+    )
+}
+
+export default Modals;
+
+```
+
+- `Modal.css`:
+```css
+.modal {
+    position: fixed;
+    z-index: 999;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 100vh;
+    background-color: rgba(0,0,0,0.75);
+    display:none;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.is-open {
+    display: flex;
+}
+
+.modal-container {
+    position: relative;
+    padding:1rem;
+    min-width: 320px;
+    max-width: 480px;
+    min-height: 200px;
+    max-height: 600px;
+    overflow-y: auto;
+    background-color: #fff;
+}
+
+.modal-close{
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+```
+- `useModal.js`:
+```js
+import { useState } from 'react';
+
+export const useModal = (initialValue = false) => {
+    const [isOpen, setIsOpen] = useState(initialValue);
+
+    const openModal = () => setIsOpen(true);
+    const closeModal = () => setIsOpen(false);
+
+    // como vamos a tener varios modales la funcionalidad la crearemos en un hook para que podamos reutilizarla para los diferentes modales
+    //de igual forma el return regresa un array para que podamos cambiar el nombre y adecuarlos al modal que queramos
+    return [isOpen,openModal,closeModal]
+}
+```
+
+### Funcionalidad y reutilización del componente ( 3 / 3 )
+
+- `Modals.js`:
+```js
+import React from 'react'
+import { useModal } from '../hooks/useModal';
+import Modal from './Modal';
+
+
+const Modals = () => {
+    const [isOpenModal1, openModal1,closeModal1] = useModal(false);
+    const [isOpenModal2, openModal2,closeModal2] = useModal(false);
+
+
+    return (
+        <div>
+            <h2>Modales</h2>
+            <button onClick={openModal1}>Modal 1</button>
+            <Modal isOpen={isOpenModal1} closeModal={closeModal1}>
+                <h3>Modal 1</h3>
+            </Modal>
+            <button onClick={openModal2}>Modal 2</button>
+            <Modal isOpen={isOpenModal2} closeModal={closeModal2}>
+                <h3>Modal 2</h3>
+            </Modal>
+        </div>
+    )
+}
+
+export default Modals;
+
+```
+
+- `Modal.js`:
+```js
+import "./Modal.css";
+
+const Modal = ({children, isOpen,closeModal}) => {
+    // crearemos una funcion para que el efecto de closeModal no se propage al hijo por que si le damos click al hijo tambien se va a cerrar el modal aun que el efecto closeModal solamente lo tenga el padre
+    const handleModalContainerClick =  e => e.stopPropagation();
+    return (
+        <article className={`modal ${isOpen && "is-open"}`} onClick={closeModal}>
+            <div className="modal-container" onClick={handleModalContainerClick}>
+                <button class="modal-close" onClick={closeModal}>X</button>
+                {children}
+            </div>
+        </article>
+    )
+}
+
+export default Modal;
+
+```
