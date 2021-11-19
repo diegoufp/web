@@ -4251,3 +4251,190 @@ const Modal = ({children, isOpen,closeModal}) => {
 export default Modal;
 
 ```
+
+## [Portales](https://es.reactjs.org/docs/portals.html)
+- `Modals.js`:
+```js
+import React from 'react'
+import { useModal } from '../hooks/useModal';
+import Modal from './Modal';
+import ModalPortal from './ModalPortal';
+
+
+const Modals = () => {
+    const [isOpenModal1, openModal1,closeModal1] = useModal(false);
+    const [isOpenModal2, openModal2,closeModal2] = useModal(false);
+    const [isOpenPortal, openModalPortal,closeModalPortal] = useModal(false);
+
+
+
+    return (
+        <div>
+            <h2>Modales</h2>
+            <button onClick={openModal1}>Modal 1</button>
+            <Modal isOpen={isOpenModal1} closeModal={closeModal1}>
+                <h3>Modal 1</h3>
+            </Modal>
+            <button onClick={openModal2}>Modal 2</button>
+            <Modal isOpen={isOpenModal2} closeModal={closeModal2}>
+                <h3>Modal 2</h3>
+            </Modal>
+            {/*Este boton va a funcionar para el ejemplo de los portales: */}
+            <button onClick={openModalPortal}>Modal 2</button>
+            <ModalPortal isOpen={isOpenPortal} closeModal={closeModalPortal}>
+                <h3>Modal en Portal</h3>
+                <p>Este es el contenido de un modal que carga en otro nodo del DOM diferente  a donde carga nuestra app de React, gracias a un React Portal</p>
+            </ModalPortal>
+        </div>
+    )
+}
+
+export default Modals;
+
+```
+
+El portal:
+- `ModalPortal.js`:
+```js
+import ReactDOM from "react-dom";
+import "./Modal.css";
+
+const ModalPortal = ({children, isOpen,closeModal}) => {
+    // crearemos una funcion para que el efecto de closeModal no se propage al hijo por que si le damos click al hijo tambien se va a cerrar el modal aun que el efecto closeModal solamente lo tenga el padre
+    const handleModalContainerClick =  e => e.stopPropagation();
+    //ReactDOM.createPortal recirbe las etiquetas y el selector donde se quiere cargar
+    // lo que hace un portal en react es inyectar el contenido de ese componente en otro nodo que exista en el arbol del dom
+    return ReactDOM.createPortal(
+        <article className={`modal ${isOpen && "is-open"}`} onClick={closeModal}>
+            <div className="modal-container" onClick={handleModalContainerClick}>
+                <button className="modal-close" onClick={closeModal}>X</button>
+                {children}
+            </div>
+        </article>,
+        document.getElementById("modal")
+    )
+}
+
+export default ModalPortal;
+```
+
+## [React Router](https://v5.reactrouter.com/web/guides/quick-start)
+functiona para react para aplicaciones web y para react nativ
+```
+npm install react-router-dom
+```
+
+### Introducción y definición de rutas
+```js
+import { BrowserRouter as Router, Route} from "react-router-dom"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            {/*El component padre para react-router se llama BrowserRouter y se estararizo el darle el alias de Router*/}
+            <Router>
+                {/*Para poder definir una ruta tenemos que usar el componente Route */}
+                <Route path="/">
+                {/*Las rutas son componentes que reciben ciertas propiedades */}
+                {/*La propiedad mas importante que recibe Rote es path la cual es la ruta relativa de la url que se va a cargar */}
+                {/*path lo que hace es encontrar la ruta que coinsida con la barra de direcion de la url */}
+                <h3>Home</h3>
+                </Route>
+                <Route path="/acerca">
+                <h3>Acerca </h3>
+                </Route>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos
+```
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+          
+            <Router>
+                {/*Si queremos que solante carge una ruta(la que tiene en coincidencia) entonces vamos a usar un switch */}
+                <Switch>
+                    <Route path="/acerca">
+                    <h3>Acerca </h3>
+                    </Route>
+                    {/*En este caso ponemos el ROute de home hasta el ultimo por que si en el navegador entramos a : localhost:3000/acerca como en su path tiene la diagonal entonces lo reconoce como correcto y ese es el que muestra y no el segundo Route con el path /acerca */}
+                    {/*ES por esta razon que el la documentacion recomiendan que primero vayan las rutas con el path mas especifico y hasta abajo las rutas con el path mas generico */}
+                    <Route path="/">
+                    <h3>Home</h3>
+                    </Route>
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos
+```
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+          
+            <Router>
+                <Switch>
+                {/*SI nosotros no queremos ordenar desde lo mas especifico a lo mas generico podemos usar un atributo booleano  que podemos agregar a las rutas que se llama escat */}
+                {/*Cuando se agrega este atributo entonces solamente moestrara las ruta con el path de manera exacta que aparesca en el navegador */}
+                    <Route exact path="/">
+                    <h3>Home</h3>
+                    </Route>
+                    <Route exact path="/acerca">
+                    <h3>Acerca </h3>
+                    </Route>
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos
+```
+### Sintaxis para declarar rutas
+Algunos desarroladores lo que hacen es crear una carpeta unicamente para las rutas la cual se puede nombrar como `pages`.
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+          
+            <Router>
+                <Switch>
+                    <Route exact path="/">
+                        <h3>Home</h3>
+                    </Route>
+                    <Route exact path="/acerca">
+                        <Acerca/>
+                    </Route>
+                    {/*Si a una ruta solamente se le va a pasar un componente donde ya venga todo el codigo podemos usar rutas de una linea usando el atributo component y asignarle el nombre del componente que tiene el contenido */}
+                    {/*tambien podemos usar la propiedad children pero en lugar de solo asignarle "Contacto" vamos a asignarle el componente completo:
+                    <Contacto/> */}
+                    <Route exact path="/contacto" component={Contacto}/>         
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos
+```
+
+Esto se puede usar para solamente declarar los header y footer una sola vez y que el contenido sea el que cambie.
