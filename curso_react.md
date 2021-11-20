@@ -4438,3 +4438,584 @@ export default ConceptosBasicos
 ```
 
 Esto se puede usar para solamente declarar los header y footer una sola vez y que el contenido sea el que cambie.
+
+### Ruta de Error 404
+- `Error404.js`:
+```js
+const Error404 = () => {
+    return (
+        <div>
+            <h3>Error 404</h3>
+            <p>Not Found</p>
+        </div>
+    )
+}
+
+export default Error404
+
+```
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    {/*Para la ruta del error 404 no necesitamos el exact en su lugar vamos a poner un asterisco * , el cual es un comodin para indicar "lo que sea", otro requisito es que la ruta del error404 este posicionada hasta el ultimo para que no haya problemas de jerarquias*/}
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+
+```
+
+###  Componentes Link y NavLink
+**Link**
+- `MenuConceptos.js`:
+```js
+import { Link } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    {/*No se recomienda hacer un menu de esta manera por que nos generan un renderizado de toda la aplicacion */}
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    {/*En el component Link en lugar de poner href el atributo se llama "to" */}
+                    {/*Como vamos a trabajar con componentes de react-router-dom entonces el componente tiene que estar dentro de componente Router y muy importante, tiene que estar fuera del Switch */}
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+```
+
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import MenuConceptos from "./MenuConceptos"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+
+```
+
+**NavLink**:
+- `MenuConceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    {/*NavLink se comporta exactamente igual que Link, pero NavLink puede usar una propiedad que se llama activeClassName */}{/*a activeClassName le podemos asignar una propiedad de css para que se lo ponga al enlace y agregandole el atributo exact hara que cuando este en la ruta del NavLink se asigne el estilo*/}
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+
+```
+
+###  Paso de Parámetros (hook useParams)
+- `Usuario.js`:
+```js
+import { useParams } from "react-router";
+
+const Usuario = () => {
+    let {username} = useParams();
+    return (
+        <div>
+            <h3>Perfil del usuario</h3>
+            <p>Nombre de usuario <b>{username}</b></p>
+        </div>
+    )
+}
+
+export default Usuario;
+```
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    {/*Para utilizar dinamicamente en el atributo path un parametros, nosotros hay que anteponerle dos puntos ":" */}
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+```
+- `MenuConceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+                <li>
+                    <span>Parametros:</span>
+                    <Link to="/usuario/jon" >jon</Link>
+                    <Link to="/usuario/diego" >diego</Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+```
+
+### Parámetros de consulta (hooks useLocation y useHistory) 
+
+- `Productos.js`:
+```js
+import { useLocation ,useHistory} from "react-router";
+
+//en la url del navegador le tenemos que agregar :
+// ?inicio=1&fin=20
+const Productos = () => {
+    const LIMIT = 20; //el limite de la pagina
+    //vamos a usar useLocation para obtener lo parametros de consulta
+    //let location = useLocation();
+    //el objeto tiene la propiedad llamada "search" que es de donde podemos obtener el paso de variables
+    let {search} = useLocation();
+    let query = new URLSearchParams(search);//lo que hace es serialisar los parametros
+
+    let start = parseInt(query.get("inicio")) || 1;  // 1
+    let end = parseInt(query.get("fin")) || LIMIT; // 20
+
+    let history = useHistory();
+
+    const handlePrev = (e) => {
+        history.push({search:`?inicio=${start - LIMIT}&fin=${end - LIMIT}`})
+    };
+    const handleNext = (e) => {
+        //con el metodo push podemos modificar los searchParams
+        history.push({search:`?inicio=${start + LIMIT}&fin=${end + LIMIT}`})
+    };
+
+    return (
+        <div>
+            <h3>Productos</h3>
+            <p>Mostrando productos del <b>{start}</b>al<b>{end}</b></p>
+            {start > LIMIT && <botton onClick={handlePrev}>atras</botton>}
+            <botton onClick={handleNext}>adelante</botton>
+        </div>
+    )
+}
+
+export default Productos;
+```
+- `MenuConceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+                <li>
+                    <span>Parametros:</span>
+                    <Link to="/usuario/jon" >jon</Link>
+                    <Link to="/usuario/diego" >diego</Link>
+                </li>
+                <li>
+                    <span>Parametros de consulta:</span>
+                    <Link to="/productos"></Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+```
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Productos from "../pages/Productos"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route exact path="/productos" component={Productos}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+
+```
+
+### Redirecciones
+Las redirecciones son importantes por ejemplo a la hora de que sea necesario que el usuario tenga que autenticarse para poder acceder a cierto contenido especifico o privado.
+
+- `MenuCOnceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+                <li>
+                    <span>Parametros:</span>
+                    <Link to="/usuario/jon" >jon</Link>
+                    <Link to="/usuario/diego" >diego</Link>
+                </li>
+                <li>
+                    <span>Parametros de consulta:</span>
+                    <Link to="/productos"></Link>
+                </li>
+                <li>
+                    <span>Redirecciones:</span>
+                    <Link to="/about">About</Link>
+                    <Link to="/contact">Contact</Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+```
+
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch,Redirect} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Productos from "../pages/Productos"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route exact path="/productos" component={Productos}/>
+                    <Route exact path="/about">
+                        {/*Para hacer una redireccion usamos el componente Redirect */}
+                        <Redirect to="/acerca"/>
+                    </Route>
+                    <Route exact path="/contact">
+                        <Redirect to="/contacto"/>
+                    </Route>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+
+```
+
+### Rutas anidadas (hook useRouteMatch)
+- `ReactTopics.js`:
+```js
+import { Link ,Switch,Route,useRouteMatch,useParams} from "react-router-dom";
+
+const Topic = () => {
+    let {topic} = useParams();
+    return(
+        <div>
+            <h4>{topic}</h4>
+        </div>
+    )
+};
+
+const ReactTopics = () => {
+    //let match = useRouteMatch();
+    // "path" nos permite construir rutas relativas <Route>
+    // miestras que "url" nos permite construir enlaces relativos <Link> o <NavLink>
+
+    let {path,url} = useRouteMatch();
+    return (
+        <div>
+            <h3>Temas de React</h3>
+            <ul>
+                <li><Link to={`${url}/jsx`}>JSX</Link></li>
+                <li><Link to={`${url}/props`}>Props</Link></li>
+                <li><Link to={`${url}/estado`}>Estado</Link></li>
+                <li><Link to={`${url}/componentes`}>Componente</Link></li>
+            </ul>
+            <Switch>
+                <Route exact path={path}/>
+                {/*Como vamos a crear rutas dinamicas no vamos a usar el atributo exact */}
+                <Route path={`${path}/:topic`} component={Topic}/>
+
+            </Switch>
+        </div>
+    )
+}
+
+export default ReactTopics;
+```
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch,Redirect} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Productos from "../pages/Productos"
+import ReactTopics from "../pages/ReactTopics"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route exact path="/productos" component={Productos}/>
+                    <Route exact path="/about">
+                        {/*Para hacer una redireccion usamos el componente Redirect */}
+                        <Redirect to="/acerca"/>
+                    </Route>
+                    <Route exact path="/contact">
+                        <Redirect to="/contacto"/>
+                    </Route>
+                    {/*Para evitar errores en esta ocacion vamos a usar subrutas y no es recomendable usar el exact: */}
+                    <Route path="react" component={ReactTopics}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+```
+- `MenuConceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+                <li>
+                    <span>Parametros:</span>
+                    <Link to="/usuario/jon" >jon</Link>
+                    <Link to="/usuario/diego" >diego</Link>
+                </li>
+                <li>
+                    <span>Parametros de consulta:</span>
+                    <Link to="/productos"></Link>
+                </li>
+                <li>
+                    <span>Redirecciones:</span>
+                    <Link to="/about">About</Link>
+                    <Link to="/contact">Contact</Link>
+                </li>
+                <li>
+                    <span>Runtas Anidadas</span>
+                    <Link to="/react">React</Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+
+```
