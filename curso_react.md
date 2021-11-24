@@ -5019,3 +5019,266 @@ const MenuConceptos = () => {
 export default MenuConceptos;
 
 ```
+
+### Rutas privadas
+
+Hasta el momento no hay un **componente** privado de react-router que nos haga el trabajo de hacer esto, pero lo podemos contruir por nosotros mismos.
+
+- `PrivateRoute.js`:
+```js
+import { Route,Redirect } from "react-router";
+
+/*const PrivateRoute = (props) => {
+    return (
+            <Route exact={props.exact} path={props.path} component={props.component}/>
+    )
+}*/
+/* En lugar de pasar sus propiedades una por una lo podemos hacer de manera conjunta:*/
+
+/*const PrivateRoute = (props) => {
+    return (
+            <Route {...props}/>
+    )
+}*/
+
+//simular la Autenticacion
+let auth;
+auth=true;
+
+/*EN este caso queremos hacer una simulacion de autenticacion asi que vamos a destructurar las propiedades en dos:
+- componentes
+- el resto de propiedades*/
+//tambien le crearemos un alias a la propiedad "component" para que cumpla con la regla de que los componentes tienen que iniciar con una letra en mayuscula, si no hacemos esto puede generar errores de no renderizado
+const PrivateRoute = ({component: Component,...rest}) => {
+    return (
+            <Route {...rest}>{auth? <Component/> : <Redirect to="/login"/>}</Route>
+    )
+};
+//de esta forma aun que sepamos la ruta de dashboard si no estamos auteticados nos redireccionara a login
+
+export default PrivateRoute;
+```
+
+- `MenuConceptos.js`:
+```js
+import { Link, NavLink } from "react-router-dom";
+
+const MenuConceptos = () => {
+    return (
+        <nav>
+            <ol>
+                <li>
+                    <span>Menu con enlaces html(no recomentado)</span>
+                    
+                    <a href="/">Home</a>
+                    <a href="/acerca">Acerca</a>
+                    <a href="/contacto">Contacto</a>
+                </li>
+                <li>
+                    <span>Componente Link:</span>
+                    <Link to="/">Home</Link>
+                    <Link to="/acerca">Acerca</Link>
+                    <Link to="/contacto">Contacto</Link>
+                </li>
+                <li>
+                    <span>Componente NavLink:</span>
+                    <NavLink exact to="/" activeClassName="active">Home</NavLink>
+                    <NavLink exact to="/acerca" activeClassName="active">Acerca</NavLink>
+                    <NavLink exact to="/contacto" activeClassName="active">Contacto</NavLink>
+                </li>
+                <li>
+                    <span>Parametros:</span>
+                    <Link to="/usuario/jon" >jon</Link>
+                    <Link to="/usuario/diego" >diego</Link>
+                </li>
+                <li>
+                    <span>Parametros de consulta:</span>
+                    <Link to="/productos"></Link>
+                </li>
+                <li>
+                    <span>Redirecciones:</span>
+                    <Link to="/about">About</Link>
+                    <Link to="/contact">Contact</Link>
+                </li>
+                <li>
+                    <span>Runtas Anidadas</span>
+                    <Link to="/react">React</Link>
+                </li>
+                <li>
+                    <span>Runtas Privadas</span>
+                    <Link to="Login">Login</Link>
+                    <Link to="/dashboard">Dashboard</Link>
+                </li>
+            </ol>
+        </nav>
+    )
+}
+
+export default MenuConceptos;
+
+```
+
+- `Conceptos.js`
+```js
+import { BrowserRouter as Router, Route, Switch,Redirect} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Dashboard from "../pages/Dashboard"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Login from "../pages/Login"
+import Productos from "../pages/Productos"
+import ReactTopics from "../pages/ReactTopics"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+import PrivateRoute from "./PrivateRoute"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route exact path="/productos" component={Productos}/>
+                    <Route exact path="/about">
+                        <Redirect to="/acerca"/>
+                    </Route>
+                    <Route exact path="/contact">
+                        <Redirect to="/contacto"/>
+                    </Route>
+                    <Route path="react" component={ReactTopics}/>
+                    <Route exact path="/login" component={Login}/>
+                    {/*Creamos un componente que funcione para rutas privadas */}
+                    <PrivateRoute exact path="/dashboard" component={Dashboard}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+```
+
+- `Login.js`:
+
+```js
+const Login = () => {
+    return (
+        <div>
+            <h3>Login</h3>
+        </div>
+    )
+}
+
+export default Login;
+
+```
+
+- `DashBoard.js`:
+
+```js
+const Dashboard = () => {
+    return (
+        <div>
+            <h3>Dashboard</h3>
+        </div>
+    )
+}
+
+export default Dashboard;
+
+```
+###  El problema de las rutas en producción 
+
+La libreria react-router lo que hace es hacer un condicionar render , ya de dependiendo en la ruta que estemos muestra un contendio u otro.
+
+El problema es que si no se tiene una estrategia del lado del servidor que permite desplegar informacion cuando el usuario acceda a una ruta en particular en la aplicacion, react-router lo unico que va a hacer a nivel de fronent es hacer el condicionar render.
+
+Pero en el momento que escribimos manualmente la ruta en el navegador podemos tener errores como: `Cannot Get /react/`.
+
+**por que pasa esto?**
+Recordemos que lo unico que hace react router es ser una libreria que nos permite manupular (fingir que estamos cambiando las rutas)  y hacer un condicional render del contendio que queramos mostrar dependiendo de una ruta u otra, si no se tiene una estrategia del lado del servidor que cuando se solucite esta ruta de manera manual aparezca un html, pues va ocurrie el error antes moestrado.
+
+Si solamente dejas las estrategias del manejo de rutas del manejo de rutas a react-router, cuando desplieges la aplicacion, **si el usuario no consume tu aplicacion desde el home**, y empieza a tratar de ingresar directamente por medio de la ruta van a ocurri errores 404.
+
+### HashRouter 
+
+Cuando estamos usando `#` internamente en el archivo html es como si estuviera buscando un id, pero al momento en que le ponemos un `#` a la url significa que lo que sigue de la url puede ser que estemos buscando un id o le estemos pasando otra cosa.
+
+`http://localhost:3000/usuario/jonmircha`
+- `usuario`: en la parte de usuario debe haber un recurso que acceda a una carpeta o a un recurso que este soportando al usuario.
+
+Lo que hace la tecnica del hash `#` con el manejo de las rutas en react-router es que va a hacer esto:
+`http://localhost:3000/#/usuario/jonmircha`
+-`#`: cuando la ruta detecta un hash en la url el sabe que aqui no cambiamso de archivo o de recurso, seguimos en el html del home y que lo que sigue del hash puede ser un id dentro del html o cualquier otra cosa que estemos utilizando  
+
+- `ConceptosBasicos.js`:
+```js
+import { BrowserRouter as Router, Route, Switch,Redirect, HashRouter, Link} from "react-router-dom"
+import Acerca from "../pages/Acerca"
+import Contacto from "../pages/Contacto"
+import Dashboard from "../pages/Dashboard"
+import Error404 from "../pages/Error404"
+import Home from "../pages/Home"
+import Login from "../pages/Login"
+import Productos from "../pages/Productos"
+import ReactTopics from "../pages/ReactTopics"
+import Usuario from "../pages/Usuario"
+import MenuConceptos from "./MenuConceptos"
+import PrivateRoute from "./PrivateRoute"
+
+const ConceptosBasicos = () => {
+    return (
+        <div>
+            <h2>Hash Router</h2>
+            {/*En lugar de utilizar BrowserRouter vamos a utilizar HashRouter */}
+            <HashRouter>
+            <nav>
+            {/*Como ya esta dento de un HashRouter automaticamente pondra el `#` en la url */}
+                <Link to="/home">Home</Link>
+                <Link to="/acerca">Acerca</Link>
+                <Link to="/contacto">Contacto</Link>
+            </nav>
+            </HashRouter>
+            <Switch>
+                <Route exact path="/" component={Home}/>
+                <Route exact path="/acerca" component={Acerca}/>
+                <Route exact path="/contacto" component={Contacto}/>
+            </Switch>
+            <hr/>
+            <h2>Conceptos Basicos</h2>
+            <Router>
+            <MenuConceptos/>
+                <Switch>
+                    <Route exact path="/" component={Home}/>
+                    <Route exact path="/acerca" component={Acerca}/>
+                    <Route exact path="/contacto" component={Contacto}/>
+                    <Route exact path="/usuario/:username" component={Usuario}/>
+                    <Route exact path="/productos" component={Productos}/>
+                    <Route exact path="/about">
+                        <Redirect to="/acerca"/>
+                    </Route>
+                    <Route exact path="/contact">
+                        <Redirect to="/contacto"/>
+                    </Route>
+                    <Route path="react" component={ReactTopics}/>
+                    <Route exact path="/login" component={Login}/>
+                    <PrivateRoute exact path="/dashboard" component={Dashboard}/>
+                    <Route path="*" component={Error404}/>     
+                </Switch>
+            </Router>
+        </div>
+    )
+}
+
+export default ConceptosBasicos;
+
+```
+
+ESta tecnica de de utilizar los HashRouter van a servir mucho cuando no se tenga una estrategia del lado de backend.
