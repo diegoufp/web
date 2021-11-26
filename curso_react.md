@@ -5282,3 +5282,289 @@ export default ConceptosBasicos;
 ```
 
 ESta tecnica de de utilizar los HashRouter van a servir mucho cuando no se tenga una estrategia del lado de backend.
+
+## Memorización ( [memo](https://es.reactjs.org/docs/react-api.html#reactmemo) ) 
+Hay que tomar con cautela el proceso de la memorizacion, el proceso de memorizacion consiste en cachear componentes y funciones para cuando se este renderizando un componente por el paso de propiedades o por el cambio de su estado, pero que internamente tenga otros componentes que no se modificaron, que esos componentes como tal permanezcan en cache y no se vuelva a renderizar.
+
+Para memorizar un componente o una funcion en react, internamente la libreria utiliza un proceso de comparacion que muchas veces puede ser mas costoso que el renderizado del componente que tratamos de evitar renderizar, por esta razon hay que utilizarlo con mucha cautela.
+
+- `App.js`:
+```js
+import './App.css';
+import Contador from './components/Contador';
+
+function App() {
+  return (
+    <div>
+    <h1>Memorizacion en React</h1>
+    <hr/>
+    <Contador/>
+    </div>
+  );
+}
+
+export default App;
+```
+- `Contador.js`:
+```js
+import { useState } from "react";
+import ContadorHijo from "./ContadorHijo";
+
+const Contador = () => {
+    const [contador, setContador] = useState(0);
+
+    const sumar = () =>setContador(contador + 1);
+    const restar = () =>setContador(contador - 1);
+
+
+    return (
+        <div style={{textAlign: "center"}}>
+            <h2>COntador</h2>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+            <h3>{contador}</h3>
+            {/*Cada vez que actualizamos la variable del contador padre el hijo tambien se renderiza completo*/}
+            <ContadorHijo/>
+        </div>
+    )
+}
+
+export default Contador;
+```
+- `ContadorHijo.js`:
+```js
+const ContadorHijo = () => {
+    console.log("Contador hijo se renderiza")
+    return (
+        <div style={{border:"thin solid #000", margin:"1rem", padding:"1rem"}}>
+            <h2>Hijo del Contador</h2>
+        </div>
+    )
+}
+
+export default ContadorHijo;
+```
+Otro ejemplo seria un boton que cambia de tema claro a tema oscuro del la interfaz y en el momento se que le de click a ese boton se tenga que renderizar un componente hijo que este haciando una llamda hacia una api que se este trayendo muchos registros y que los piente en una UI, estos proceso de renderizado podrian ser muy costosos.
+
+En estos casos lo que nos podria convenir es memorizar con la funcion react-memo el componente hijo, detal manera que si el el componente hijo no sufre ningun cambio, aun que la variable del estado del componente padre se este renderizando ya no tendrimos esta clase de problemas de renderizado costosos y entonces el componente va a permanecer memorizado y hasta que el componente internamente cambien es cuando se va a volver a renderizar, en ese sentido estariamos optimizando el rendimiento de nuestra aplicacion.
+
+- `COntadorHijo.js`:
+```js
+import {memo} from 'react';  
+
+const ContadorHijo = () => {
+    console.log("Contador hijo se renderiza")
+    return (
+        <div style={{border:"thin solid #000", margin:"1rem", padding:"1rem"}}>
+            <h2>Hijo del Contador</h2>
+        </div>
+    )
+};
+// lo unico que tendriamos que hacer seria envolver en la funcion memo de react pasarle como parametro el componente que queremos memorizar 
+// ahora a un que cambiemos la variable de estado del componente padre, el componente no se volvera a renderizar 
+export default memo(ContadorHijo);
+
+```
+
+**memo**
+- Se escarga de memorizar un componente 
+- Lo vuelve memorizar al momento de que sus **props** cambien.
+- Evitar re-renderizados.
+- Hay que evitarlo en la medida de lo posible, pues podria ser mas constosa la tarea de memorizacion que el re-renderizado del componente.
+- Usalo cuando:
+    - Tengamos muchso elementos renderizados en una lista.
+    - Llamamos datos de Apis.
+    - Un componente se vielve muy pesado.
+    - Salen alertar de rendimiento en la consola.
+
+## Memorización ( [useCallback](https://es.reactjs.org/docs/hooks-reference.html#usecallback) )
+Que va a pasar si nosotros tenemos que pasarle funciones como propiedades a un contenedor hijo, que va a pasar con el renderizado?, se memoriza o no?
+
+La funcionalidad de `useCallback` es memorizar funciones puras.
+- `Contador.js`:
+```js
+import { useState } from "react";
+import ContadorHijo from "./ContadorHijo";
+
+const Contador = () => {
+    const [contador, setContador] = useState(0);
+    const [input, setInput] = useState("")
+
+    const sumar = () =>setContador(contador + 1);
+    const restar = () =>setContador(contador - 1);
+
+    const handleInput = (e) => setInput(e.target.value); 
+
+
+    return (
+        <div style={{textAlign: "center"}}>
+            <h2>COntador</h2>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+            <h3>{contador}</h3>
+            <input type="text" onChange={handleInput} value={input}/>
+            {/*En este caso el componente dijo se renderiza solamente cuando la variable de estado contador cambia ya que se le esta pasando como parametro, pero que pasaria si en vez de una variable de estado se pasamos como parametro una funcion? */}
+            {/*cuando le asignamos una funcion del componente padre al componente hijo entonces ahora ya se ve afectado por la re-renderizacion del input */}
+            <ContadorHijo contador={contador} sumar={sumar} restar={restar}/>
+        </div>
+    )
+}
+
+export default Contador;
+```
+- `ContadorHijo.js`:
+```js
+import {memo} from 'react';  
+
+const ContadorHijo = ({contador,sumar,restar}) => {
+    console.log("Contador hijo se renderiza")
+    return (
+        <div style={{border:"thin solid #000", margin:"1rem", padding:"1rem"}}>
+            <h2>Hijo del Contador</h2>
+            <h3>{contador}</h3>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+        </div>
+    )
+};
+
+export default memo(ContadorHijo);
+```
+
+React-memo lo que hace es memorizar el componente, pero cuando el componente recibe propiedades que son funciones esas funciones tambien hay que memorizarlas y para eso vamos a hacer uno de un hook llamado `useCallback`, que lo que hace es memorizar una funcion pura.
+
+- `Contador.js`:
+```js
+import { useState,useCallback } from "react";
+import ContadorHijo from "./ContadorHijo";
+
+const Contador = () => {
+    const [contador, setContador] = useState(0);
+    const [input, setInput] = useState("");
+
+    //const sumar = () =>setContador(contador + 1);
+    const sumar = useCallback(
+        () => {
+            setContador(contador + 1)
+        },
+        [contador],
+    );
+    //const restar = () =>setContador(contador - 1);
+    const restar = useCallback(
+        () => {
+            setContador(contador - 1)
+        },
+        [contador],
+    );
+
+    const handleInput = (e) => setInput(e.target.value); 
+
+
+    return (
+        <div style={{textAlign: "center"}}>
+            <h2>COntador</h2>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+            <h3>{contador}</h3>
+            <input type="text" onChange={handleInput} value={input}/>
+            
+            <ContadorHijo contador={contador} sumar={sumar} restar={restar}/>
+        </div>
+    )
+}
+
+export default Contador;
+```
+
+**useCallback**
+- Memoriza una funcion, para no volver a definir en cada render.
+- Usalo siempre que se pase una funcion como **prop** a un componente memorizado.
+- Usalo suiempre que se pase una funcion como parametros de un efecto.
+
+## Memorización ( [useMemo](https://es.reactjs.org/docs/hooks-reference.html#usememo) ) 
+`useMemo` nos permite memorizar las **propiedades computadas**, valores que necesitemos calcular en tiempo de ejecucion de nuestra aplicacion, es decir, valor que se calculen y luego se impriman en pantalla por ejemplo.
+
+Tambien cuando tengas que hacer proceso muy pesados como por ejemplo estar esperando recirbir datos de una api, tambien para eso nos va a servir `useMemo`.
+
+- `COntadorHijo.js`:
+```js
+import {memo} from 'react';  
+
+const ContadorHijo = ({contador,sumar,restar}) => {
+    let superNumero = 0;
+
+    for(let i=0; i<100000; i++){
+        /*este calculo de superNumero va afectar en el renderizado */
+        /*Esto ocurre tambien cuando variable de estado y funciones son usadas ya que estas necesatan ser renderizadas denuevo junto con el componente */
+        /*EStos es conocido como valor calculado o computer property */
+        /*En estos caso se recomienda memorizar el valor calculado */
+        superNumero++;
+    }
+
+
+    return (
+        <div style={{border:"thin solid #000", margin:"1rem", padding:"1rem"}}>
+            <h2>Hijo del Contador</h2>
+            <h3>{contador}</h3>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+            <h3>{superNumero}</h3>
+        </div>
+    )
+};
+
+export default memo(ContadorHijo);
+```
+Despues de `useMemo`:
+- `ContadorHijo`:
+```js
+import {memo, useMemo} from 'react';  
+
+const ContadorHijo = ({contador,sumar,restar}) => {
+    /*let superNumero = 0;
+
+    for(let i=0; i<100000; i++){
+        superNumero++;
+    }*/
+    /*use memo necesita una funcion y una variable de estado, pero en esta ocacion no vamos a darle uan variable de estado y aun asi va a funcionar correctamente, para esto tenemos que asignarle una array vacio */
+    /*useMemo nos va a marcar un error si no retornamos el valor que pretendemos memorizar, no estas memorizando una funcion, estamos memorizando un valor dado cierto proceso */
+    const superNumero = useMemo(() => {
+        let numero = 0;
+
+        for(let i=0; i<100000; i++){
+            numero++;
+        };
+        return numero;
+    }, [])
+
+
+    return (
+        <div style={{border:"thin solid #000", margin:"1rem", padding:"1rem"}}>
+            <h2>Hijo del Contador</h2>
+            <h3>{contador}</h3>
+            <nav>
+                <button onclick={sumar}>+</button>
+                <button onclick={restar}>-</button>
+            </nav>
+            <h3>{superNumero}</h3>
+        </div>
+    )
+};
+
+export default memo(ContadorHijo);
+```
+
+**useMemo**
+- Memorizar un valor calculado, es decir, el resultado de una funcion.
+- genera propiedades computadas.
+- Usalo en proceso pesados.
