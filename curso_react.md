@@ -5567,4 +5567,266 @@ export default memo(ContadorHijo);
 **useMemo**
 - Memorizar un valor calculado, es decir, el resultado de una funcion.
 - genera propiedades computadas.
-- Usalo en proceso pesados.
+- Usalo en proceso pesados. 
+
+## [Context API](https://es.reactjs.org/docs/context.html)
+### Introducción 
+**Context API** es una amanera que tiene react nativamente para manupular el estado de una forma mas optima.
+
+Para pode rutilizar react context es importante que tus aplicaciones sean superiores a la version 16.3 que es cuando se implemento.
+
+El context nos va a servir sobre todo nos va a servir para en lugar de estar pasando como propiedades algunos valores  de un conponente hijo a un componente padre y luego un componente nieto y asi sucesivamente, el contexto, nos va a permitir tener todas estas variables que probable mente algunos de los nodos del arbol de la aplicacion los vaya a utilizar en algun momento lo pueda tener disponible.
+
+EN pocas palabras el **context** va a ser muy util  en aplicaciones donde tengamos que compartir variables de estado global.
+
+**Utiliza context** cuando tengas la nececidad de que una variable te vaya a modificar varios aspectos de tu interfaz.
+
+### Haciendo una APP con THEME Dark/Light SIN Context
+
+- `App.js`:
+```js
+import './App.css';
+import MyPage from './components/MyPage';
+
+function App() {
+  return (
+    <div className="App">
+     <h1>React Context API</h1>
+     <hr/>
+     <MyPage/>
+    </div>
+
+  );
+}
+
+export default App;
+
+```
+
+- `MyPage.js`:
+```js
+import { useState } from "react";
+import Footer from "./Footer";
+import Header from "./Header";
+import Main from "./Main";
+
+const initialState="light";
+
+const MyPage = () => {
+    const [theme, setTheme] = useState(initialState);
+
+    const handleTheme = (e) =>{
+        if(e.target.value === "light"){
+            setTheme("light");
+        }else{
+            setTheme("dark");
+        }
+    };
+    return (
+        <div className="my-page">
+            <Header theme={theme} handleTheme={handleTheme}/>
+            <Main theme={theme}/>
+            <Footer theme={theme}/>
+        </div>
+    )
+}
+
+export default MyPage;
+```
+
+- `Header.js`:
+```js
+const Header = ({theme, handleTheme}) => {
+    return (
+        <header className={theme}>
+            <h2>Mi aplicacion SIN Context API</h2>
+            <h3>Mi Cabecera</h3>
+            <select name="language">
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth" onClick={handleTheme} value="light"/>
+            <label htmlFor="light">Claro</label>
+            <input type="radio" name="theme" id="dark" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark">Oscuro</label>
+            <button>Iniciar Sesion</button>
+        </header>
+    )
+}
+
+export default Header;
+```
+- `Main.js`:
+```js
+const Main = () => {
+    return (
+        <main>
+        <p>Bienvenid@ invitad@</p>
+        <p>Hola Usuari@</p>
+        <p>Mi contenido principal</p>
+        </main>
+    )
+}
+
+export default Main;
+
+```
+
+- `Footer.js`:
+```js
+const Footer = () => {
+    return (
+        <footer>
+            <h4>MI pie de pagina</h4>
+        </footer>
+    )
+}
+
+export default Footer;
+
+```
+- `index.css`:
+```css
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.my-page{
+  margin: 2rem auto;
+  padding: 1rem;
+  width: 70%;
+  background: #CCC;
+}
+
+.dark{
+  background-color: #fff;
+  /*no se recomienda usar el filter para cambiar los colores pero en este caso lo usaremos para hacer un ejemplo rapido*/
+  filter: invert(1);
+}
+```
+
+### Haciendo una APP MultiIDIOMA SIN Context 
+- `MyPage.js`:
+```js
+import { useState } from "react";
+import Footer from "./Footer";
+import Header from "./Header";
+import Main from "./Main";
+
+const initialTheme="light";
+const initialLanguage = "es";
+
+const translations = {
+    es:{headerTitle:"Mi aplicacion SIN Context API",
+        headerSubtitle:"Mi cabecera",
+        headerLight:"Claro",
+        headerDark:"Oscuro",
+        buttonLogin: "Iniciar Sesion",
+        buttonLogout: "Cerrar Sesion",
+        mainWelcome: "Bienvenid@ invitado",
+        mainHello: "Hola Usuari@",
+        mainContent: "Mi contendio principal",
+        footerTitle: "Mi pie de pagina" },
+    en:{headerTitle:"My applicaction without Context API",
+    headerSubtitle:"My header",
+    headerLight:"Light",
+    headerDark:"Dark",
+    buttonLogin: "Login",
+    buttonLogout: "Logout",
+    mainWelcome: "Welcome",
+    mainHello: "Hello User",
+    mainContent: "My main content",
+    footerTitle: "My footer"}
+}
+
+const MyPage = () => {
+    const [theme, setTheme] = useState(initialTheme);
+    const [language, setLanguage] = useState(initialLanguage);
+    const [texts,setTexts] = useState(translations[language]);
+
+
+    const handleTheme = (e) =>{
+        if(e.target.value === "light"){
+            setTheme("light");
+        }else{
+            setTheme("dark");
+        }
+    };
+
+    const handleLanguage = (e) =>{
+        if(e.target.value === "es"){
+            setLanguage("es");
+            setTexts(translations.es)
+        }else{
+            setLanguage("en");
+            setTexts(translations.en)
+        }
+    };
+    return (
+        <div className="my-page">
+            <Header theme={theme} handleTheme={handleTheme} texts={texts} handleLanguage={handleLanguage}/>
+            <Main theme={theme} texts={texts}/>
+            <Footer theme={theme} texts={texts}/>
+        </div>
+    )
+}
+
+export default MyPage;
+```
+
+- `Header.js`:
+```js
+const Header = ({theme, handleTheme,handleLanguage,texts}) => {
+    return (
+        <header className={theme}>
+            <h2>{texts.headerTitle}</h2>
+            <h3>{texts.headerSubtitle}</h3>
+            <select name="language" onChange={handleLanguage}>
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth" onClick={handleTheme} value="light"/>
+            <label htmlFor="light">{texts.headerLight}</label>
+            <input type="radio" name="theme" id="dark" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark">{texts.headerDark}</label>
+            <button>{texts.bottonLogin}{texts.buttonLogout}</button>
+        </header>
+    )
+}
+
+export default Header;
+```
+
+- `Main.js`:
+```js
+const Main = ({texts,theme}) => {
+    return (
+        <main className={theme}>
+        <p>{texts.mainWelcome}</p>
+        <p>{texts.mainHello}</p>
+        <p>{texts.mainContent}</p>
+        </main>
+    )
+}
+
+export default Main;
+
+```
+- `Footer.js`:
+```js
+const Footer = ({theme,texts}) => {
+    return (
+        <footer className={theme}>
+            <h4>{texts.footerTitle}</h4>
+        </footer>
+    )
+}
+
+export default Footer;
+
+```
