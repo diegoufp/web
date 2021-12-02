@@ -5577,9 +5577,11 @@ Para pode rutilizar react context es importante que tus aplicaciones sean superi
 
 El context nos va a servir sobre todo nos va a servir para en lugar de estar pasando como propiedades algunos valores  de un conponente hijo a un componente padre y luego un componente nieto y asi sucesivamente, el contexto, nos va a permitir tener todas estas variables que probable mente algunos de los nodos del arbol de la aplicacion los vaya a utilizar en algun momento lo pueda tener disponible.
 
-EN pocas palabras el **context** va a ser muy util  en aplicaciones donde tengamos que compartir variables de estado global.
+Es pocas palabras el **context** va a ser muy util  en aplicaciones donde tengamos que compartir variables de estado global.
 
 **Utiliza context** cuando tengas la nececidad de que una variable te vaya a modificar varios aspectos de tu interfaz.
+
+Por cuestiones de rendimiento solamente usa el contexto cuando necesites compartir variables de estado, efectos en varios elementos dentro del arbol de componentes de la aplicacion.
 
 ### Haciendo una APP con THEME Dark/Light SIN Context
 
@@ -5830,3 +5832,781 @@ const Footer = ({theme,texts}) => {
 export default Footer;
 
 ```
+
+###  Haciendo una APP con SESIÓN de Usuario SIN Context
+
+- `MyPage.js`:
+```js
+import { useState } from "react";
+import Footer from "./Footer";
+import Header from "./Header";
+import Main from "./Main";
+
+const initialTheme="light";
+const initialLanguage = "es";
+
+const translations = {
+    es:{headerTitle:"Mi aplicacion SIN Context API",
+        headerSubtitle:"Mi cabecera",
+        headerLight:"Claro",
+        headerDark:"Oscuro",
+        buttonLogin: "Iniciar Sesion",
+        buttonLogout: "Cerrar Sesion",
+        mainWelcome: "Bienvenid@ invitado",
+        mainHello: "Hola Usuari@",
+        mainContent: "Mi contendio principal",
+        footerTitle: "Mi pie de pagina" 
+    },
+    en:{headerTitle:"My applicaction without Context API",
+        headerSubtitle:"My header",
+        headerLight:"Light",
+        headerDark:"Dark",
+        buttonLogin: "Login",
+        buttonLogout: "Logout",
+        mainWelcome: "Welcome Guest",
+        mainHello: "Hello User",
+        mainContent: "My main content",
+        footerTitle: "My footer"
+    }
+};
+
+const initialAuth = null;
+
+const MyPage = () => {
+    const [theme, setTheme] = useState(initialTheme);
+    const [language, setLanguage] = useState(initialLanguage);
+    const [texts,setTexts] = useState(translations[language]);
+    const [auth, setAuth] = useState(initialAuth)
+
+
+    const handleTheme = (e) =>{
+        if(e.target.value === "light"){
+            setTheme("light");
+        }else{
+            setTheme("dark");
+        }
+    };
+
+    const handleLanguage = (e) =>{
+        if(e.target.value === "es"){
+            setLanguage("es");
+            setTexts(translations.es)
+        }else{
+            setLanguage("en");
+            setTexts(translations.en)
+        }
+    };
+
+    const handleAuth = (e)=>{
+        if(auth){
+            setAuth(null);
+        }else{
+            setAuth(true);
+        }
+    };
+    return (
+        <div className="my-page">
+            <Header theme={theme} handleTheme={handleTheme} texts={texts} handleLanguage={handleLanguage} auth={auth} handleAuth={handleAuth}/>
+            <Main theme={theme} texts={texts} auth={auth}/>
+            <Footer theme={theme} texts={texts}/>
+        </div>
+    )
+}
+
+export default MyPage;
+```
+
+- `Header.js`:
+```js
+const Header = ({theme, handleTheme,handleLanguage,texts, auth,handleAuth}) => {
+    return (
+        <header className={theme}>
+            <h2>{texts.headerTitle}</h2>
+            <h3>{texts.headerSubtitle}</h3>
+            <select name="language" onChange={handleLanguage}>
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth" onClick={handleTheme} value="light"/>
+            <label htmlFor="light">{texts.headerLight}</label>
+            <input type="radio" name="theme" id="dark" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark">{texts.headerDark}</label>
+            <button onclick={handleAuth}>
+            {auth? texts.buttonLogout: texts.bottonLogin}
+            </button>
+        </header>
+    )
+}
+
+export default Header;
+```
+
+- `Main.js`:
+```js
+const Main = ({texts,theme, auth}) => {
+    return (
+        <main className={theme}>
+        {auth ? <p>{texts.mainHello}</p> : <p>{texts.mainWelcome}</p>}
+        <p>{texts.mainContent}</p>
+        </main>
+    )
+}
+
+export default Main;
+
+```
+
+- `Footer.js`:
+```js
+const Footer = ({theme,texts}) => {
+    return (
+        <footer className={theme}>
+            <h4>{texts.footerTitle}</h4>
+        </footer>
+    )
+}
+
+export default Footer;
+```
+
+### Haciendo una APP con THEME Dark/Light CON Context
+
+En el ejercicio anterio pudimos comprobar como al no usar context los componentes tienen muchas propiedades, para esto es que nos ayuda context, cuando tenemos que pasar un valor o un funcion en varios elementos a lo largo de la estructura del arbol de nodos de nuestra aplicacion nos conviene usar **context**.
+
+Ser recomienda crear una carpeta que reuna los contextos.
+
+- `ThemeContext.js`:
+```js
+import { createContext, useState } from "react";
+
+// cremos un contexto con la funcion createContext()
+const ThemeContext = createContext();
+//se suele exportar por defecto este contexto;
+//este contexto internamente tiene dos objetos, un provedor, es decir, el graper que va a proveer a los elementos internos que tenga todos los valores que van a ser globales y un consumer, es decir, el otro mecanismo que nos va a permitir consumir esos valores que da el provedor 
+
+//ahora vamos a crear un componente el cual v a a ser el provedor, hay quien incluso crea un archivo solamente para el contexto y adicionalmente se crean otro archivo para crear al provedor (el que va a estar almacenanto todos los valores globales)
+
+// en esta cocacion se crearan ambos en el mismo archivo, tanto el cxontexto com el procedor
+
+//el cosumer nos lo vamos a utilizar, vamos a consumir la data mediante un hook
+const initialTheme="light";
+//el provedor forzosamente tiene que hacer uso de la etiqueta children, el provider es el que va a proveer todos los valores y se los va a pasar a todos los hijos que tenga internamente 
+//provedor:
+const ThemeProvider = ({children}) =>{
+    const [theme, setTheme] = useState(initialTheme);
+    const handleTheme = (e) =>{
+        if(e.target.value === "light"){
+            setTheme("light");
+        }else{
+            setTheme("dark");
+        }
+    };
+    //cada valor que queramos compartir de manera global lo podremos definir como propiedades del constructor ThemeContext, pero se te sugiere que previamente tengas un objeto y en este objeto por cada propiedad que tenga el objeto es cada un de esos valores que quieres conservar globalmente para lo componentes que compartan este contexto 
+    const data={theme,handleTheme};
+
+    return(
+        <ThemeContext.Provider value={data}>{children}</ThemeContext.Provider>
+    )
+};
+export {ThemeProvider}
+export default ThemeContext;
+```
+
+- `MyPageContext.js`:
+```js
+import { useState } from "react";
+import { ThemeProvider } from "./context/ThemeContext";
+import FooterContext from "./FooterContext";
+import HeaderContext from "./HeaderContext";
+import MainContext from "./MainContext";
+
+
+const initialLanguage = "es";
+
+const translations = {
+    es:{headerTitle:"Mi aplicacion SIN Context API",
+        headerSubtitle:"Mi cabecera",
+        headerLight:"Claro",
+        headerDark:"Oscuro",
+        buttonLogin: "Iniciar Sesion",
+        buttonLogout: "Cerrar Sesion",
+        mainWelcome: "Bienvenid@ invitado",
+        mainHello: "Hola Usuari@",
+        mainContent: "Mi contendio principal",
+        footerTitle: "Mi pie de pagina" 
+    },
+    en:{headerTitle:"My applicaction without Context API",
+        headerSubtitle:"My header",
+        headerLight:"Light",
+        headerDark:"Dark",
+        buttonLogin: "Login",
+        buttonLogout: "Logout",
+        mainWelcome: "Welcome Guest",
+        mainHello: "Hello User",
+        mainContent: "My main content",
+        footerTitle: "My footer"
+    }
+};
+
+const initialAuth = null;
+
+const MyPageContext = () => {
+    
+    const [language, setLanguage] = useState(initialLanguage);
+    const [texts,setTexts] = useState(translations[language]);
+    const [auth, setAuth] = useState(initialAuth)
+
+
+    const handleLanguage = (e) =>{
+        if(e.target.value === "es"){
+            setLanguage("es");
+            setTexts(translations.es)
+        }else{
+            setLanguage("en");
+            setTexts(translations.en)
+        }
+    };
+
+    const handleAuth = (e)=>{
+        if(auth){
+            setAuth(null);
+        }else{
+            setAuth(true);
+        }
+    };
+    return (
+        <div className="my-page">
+        {/*Tenemos que mandar a llamar a ThemeProvider y dentro del mismo vamos a poner las etiquetas que se relacionen con la informacvion que contenga*/}
+        <ThemeProvider>
+            <HeaderContext texts={texts} handleLanguage={handleLanguage} auth={auth} handleAuth={handleAuth}/>
+            <MainContext texts={texts} auth={auth}/>
+            <FooterContext texts={texts}/>
+        </ThemeProvider>
+        </div>
+    )
+}
+
+export default MyPageContext;
+
+```
+
+- `MainContext.js`:
+```js
+import { useContext } from "react";
+import ThemeContext from "./context/ThemeContext";
+
+const MainContext = ({texts, auth}) => {
+    const {theme} = useContext(ThemeContext);
+    return (
+        <main className={theme}>
+        {auth ? <p>{texts.mainHello}</p> : <p>{texts.mainWelcome}</p>}
+        <p>{texts.mainContent}</p>
+        </main>
+    )
+}
+
+export default MainContext;
+```
+
+- `HeaderContext.js`:
+```js
+import { useContext } from "react";
+import ThemeContext from "./context/ThemeContext";
+
+const HeaderContext = ({handleLanguage,texts, auth,handleAuth}) => {
+    //las propiedades de theme ahora las va a obtener desde un contexto 
+    //vamos a destrucutrar las variable que estan definidas en ThemeContext
+    // useContext recibe como parametro el contexto que se a creado, en este caso es ThemeContext
+    const {theme,handleTheme} = useContext(ThemeContext);
+    return (
+        <header className={theme}>
+            <h2>{texts.headerTitle}</h2>
+            <h3>{texts.headerSubtitle}</h3>
+            <select name="language" onChange={handleLanguage}>
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth-context" onClick={handleTheme} value="light"/>
+            <label htmlFor="light-context">{texts.headerLight}</label>
+            <input type="radio" name="theme" id="dark-context" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark-context">{texts.headerDark}</label>
+            <button onclick={handleAuth}>
+            {auth? texts.buttonLogout: texts.bottonLogin}
+            </button>
+        </header>
+    )
+}
+
+export default HeaderContext;
+```
+
+- `FooterContext.js`:
+```js
+import { useContext } from "react";
+import ThemeContext from "./context/ThemeContext";
+
+const FooterContext = ({texts}) => {
+    const {theme} = useContext(ThemeContext);
+    return (
+        <footer className={theme}>
+            <h4>{texts.footerTitle}</h4>
+        </footer>
+    )
+}
+
+export default FooterContext;
+
+```
+
+### Haciendo una APP MultiIDIOMA CON Context
+
+- `LanguageContext.js`:
+```js
+import { createContext,useState } from "react";
+
+const LanguageContext = createContext();
+const initialLanguage = "es";
+const translations = {
+    es:{headerTitle:"Mi aplicacion SIN Context API",
+        headerSubtitle:"Mi cabecera",
+        headerLight:"Claro",
+        headerDark:"Oscuro",
+        buttonLogin: "Iniciar Sesion",
+        buttonLogout: "Cerrar Sesion",
+        mainWelcome: "Bienvenid@ invitado",
+        mainHello: "Hola Usuari@",
+        mainContent: "Mi contendio principal",
+        footerTitle: "Mi pie de pagina" 
+    },
+    en:{headerTitle:"My applicaction without Context API",
+        headerSubtitle:"My header",
+        headerLight:"Light",
+        headerDark:"Dark",
+        buttonLogin: "Login",
+        buttonLogout: "Logout",
+        mainWelcome: "Welcome Guest",
+        mainHello: "Hello User",
+        mainContent: "My main content",
+        footerTitle: "My footer"
+    }
+};
+const LanguageProvider = ({children})=>{
+    const [language, setLanguage] = useState(initialLanguage);
+    const [texts,setTexts] = useState(translations[language]);
+
+    const data={texts,handleLanguage};
+
+    const handleLanguage = (e) =>{
+        if(e.target.value === "es"){
+            setLanguage("es");
+            setTexts(translations.es)
+        }else{
+            setLanguage("en");
+            setTexts(translations.en)
+        }
+    };
+
+    return (
+    <LanguageContext.Provider value={data}>
+    {children}
+    </LanguageContext.Provider>)
+};
+
+export {LanguageProvider};
+export default LanguageContext;
+```
+
+- `MyPageContext.js`:
+```js
+import { useState } from "react";
+import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import FooterContext from "./FooterContext";
+import HeaderContext from "./HeaderContext";
+import MainContext from "./MainContext";
+
+const initialAuth = null;
+
+const MyPageContext = () => {
+    
+    
+    const [auth, setAuth] = useState(initialAuth)
+
+
+    
+
+    const handleAuth = (e)=>{
+        if(auth){
+            setAuth(null);
+        }else{
+            setAuth(true);
+        }
+    };
+    return (
+        <div className="my-page">
+        <ThemeProvider>
+        <LanguageProvider>
+            <HeaderContext  auth={auth} handleAuth={handleAuth}/>
+            <MainContext auth={auth}/>
+            <FooterContext/>
+        </LanguageProvider>
+        </ThemeProvider>
+        </div>
+    )
+}
+
+export default MyPageContext;
+
+```
+
+- `MainContext.js`:
+```js
+import { useContext } from "react";
+import LanguageContext from "./context/LanguageContext";
+import ThemeContext from "./context/ThemeContext";
+
+const MainContext = ({auth}) => {
+    const {theme} = useContext(ThemeContext);
+    const {texts} = useContext(LanguageContext);
+    return (
+        <main className={theme}>
+        {auth ? <p>{texts.mainHello}</p> : <p>{texts.mainWelcome}</p>}
+        <p>{texts.mainContent}</p>
+        </main>
+    )
+}
+
+export default MainContext;
+```
+
+- `HeaderContext.js`:
+```js
+import { useContext } from "react";
+import LanguageContext from "./context/LanguageContext";
+import ThemeContext from "./context/ThemeContext";
+
+const HeaderContext = ({auth,handleAuth}) => {
+    
+    const {theme,handleTheme} = useContext(ThemeContext);
+    const {texts,handleLanguage} = useContext(LanguageContext);
+    return (
+        <header className={theme}>
+            <h2>{texts.headerTitle}</h2>
+            <h3>{texts.headerSubtitle}</h3>
+            <select name="language" onChange={handleLanguage}>
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth-context" onClick={handleTheme} value="light"/>
+            <label htmlFor="light-context">{texts.headerLight}</label>
+            <input type="radio" name="theme" id="dark-context" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark-context">{texts.headerDark}</label>
+            <button onclick={handleAuth}>
+            {auth? texts.buttonLogout: texts.bottonLogin}
+            </button>
+        </header>
+    )
+}
+
+export default HeaderContext;
+
+```
+
+- `FooterContext.js`:
+```js
+import { useContext } from "react";
+import LanguageContext from "./context/LanguageContext";
+import ThemeContext from "./context/ThemeContext";
+
+const FooterContext = () => {
+    const {theme} = useContext(ThemeContext);
+    const {texts} = useContext(LanguageContext);
+    return (
+        <footer className={theme}>
+            <h4>{texts.footerTitle}</h4>
+        </footer>
+    )
+}
+
+export default FooterContext;
+
+```
+
+### Haciendo una APP con SESIÓN de Usuario CON Context
+
+- `AuthContext.js`:
+```js
+import { createContext,useState } from "react";
+
+const AuthContext = createContext();
+
+const initialAuth = null;
+const AuthProvider = ({children}) =>{
+    const [auth, setAuth] = useState(initialAuth)
+
+    const handleAuth = (e)=>{
+        if(auth){
+            setAuth(null);
+        }else{
+            setAuth(true);
+        }
+    };
+    const data={auth,handleAuth};
+    return(
+        <AuthContext.Provider value={data}>{children}</AuthContext.Provider>
+    )
+};
+
+export {AuthProvider}; 
+
+export default AuthContext;
+```
+
+- `MyPageContext.js`:
+```js
+import { AuthProvider } from "./context/AuthContext";
+import { LanguageProvider } from "./context/LanguageContext";
+import { ThemeProvider } from "./context/ThemeContext";
+import FooterContext from "./FooterContext";
+import HeaderContext from "./HeaderContext";
+import MainContext from "./MainContext";
+
+
+
+const MyPageContext = () => {
+    return (
+        <div className="my-page">
+        <AuthProvider>
+        <ThemeProvider>
+        <LanguageProvider>
+            <HeaderContext/>
+            <MainContext/>
+            <FooterContext/>
+        </LanguageProvider>
+        </ThemeProvider>
+        </AuthProvider>
+
+        </div>
+    )
+}
+
+export default MyPageContext;
+
+```
+
+- `MainContext.js`:
+```js
+import { useContext } from "react";
+import AuthContext from "./context/AuthContext";
+import LanguageContext from "./context/LanguageContext";
+import ThemeContext from "./context/ThemeContext";
+
+const MainContext = () => {
+    const {theme} = useContext(ThemeContext);
+    const {texts} = useContext(LanguageContext);
+    const {auth} = useContext(AuthContext);
+
+    return (
+        <main className={theme}>
+        {auth ? <p>{texts.mainHello}</p> : <p>{texts.mainWelcome}</p>}
+        <p>{texts.mainContent}</p>
+        </main>
+    )
+}
+
+export default MainContext;
+
+```
+
+- `HeaderContext.js`:
+```js
+import { useContext } from "react";
+import AuthContext from "./context/AuthContext";
+import LanguageContext from "./context/LanguageContext";
+import ThemeContext from "./context/ThemeContext";
+
+const HeaderContext = () => {
+    
+    const {theme,handleTheme} = useContext(ThemeContext);
+    const {texts,handleLanguage} = useContext(LanguageContext);
+    const {auth,handleAuth} = useContext(AuthContext);
+
+    return (
+        <header className={theme}>
+            <h2>{texts.headerTitle}</h2>
+            <h3>{texts.headerSubtitle}</h3>
+            <select name="language" onChange={handleLanguage}>
+                <option value="es">ES</option>
+                <option value="en">EN</option>
+            </select>
+            <input type="radio" name="theme" id="ligth-context" onClick={handleTheme} value="light"/>
+            <label htmlFor="light-context">{texts.headerLight}</label>
+            <input type="radio" name="theme" id="dark-context" onClick={handleTheme} value="dark"/>
+            <label htmlFor="dark-context">{texts.headerDark}</label>
+            <button onclick={handleAuth}>
+            {auth? texts.buttonLogout: texts.bottonLogin}
+            </button>
+        </header>
+    )
+}
+
+export default HeaderContext;
+
+```
+
+## [Reducers](https://es.reactjs.org/docs/hooks-reference.html#usereducer)
+
+### Introducción
+
+EL hook `useReducer` nos permite manejar de una manera mas eficiente el estado, es una alternativa al hook `useState`, de hecho en la documentecion de react nos sugieren que cuando nuestro estado empiece a volverse un poco mas complejo, quizas nos convenga, en lugar de estarlo manejando atravez de `useState` usar `useReducer`.
+
+Esto va a servir para aplicaciones de mediana complejidad y es una alternativa a librerias que manejan el estado como reflux o redux.   
+
+**Reducer** es una funcion pura, es decir, que solamente devuelve el valor y que toda la logia de la funcion es capaz de resolver un solo procesamiento, su programacion no va fectar cosas que esten fuera de esa funcion, tampoco va a generar efectos secudarios, ni internamnete ni externamente.
+
+Los **Reducer** siempre van a devolver un valor y dicho valor se va a considerar como el estado de la aplicacion. No podemos usar `useEffect` dento de funciones reductoras, tampoco podemos hacer tareas asincronas.
+
+En una aplicacion se puede tener mas de un reducer.
+- `App.js`:
+```js
+import './App.css';
+import Contador from './components/Contador';
+
+function App() {
+  return (
+    <div>
+      <h1>useReducer</h1>
+      <hr/>
+      <Contador/>
+    </div>
+  );
+}
+
+export default App;
+```
+
+- `Contador.js`:
+```js
+import { useReducer } from "react";
+import { useState } from "react";
+//el initialState se sugiere que sea un objeto 
+const initialState = {contador:0};
+
+function reducer(state, action){
+    //una funcion reductora va a recibir dos parametros:
+    //1- El estado anterior
+    //2- Un objeto que se va a llamar "action"
+    //la "action" internamente va a ser un objeto que va a tener un tipo de accion(el tipo de accion que se va a ejecutar) y adicionalmente pude o no tener una payload
+    //el concepto de payload es como el valor que le estamso mandando para que modifique el estado
+    // esta funcion si o si siempre va a retornar el estado  
+
+    //en los reducer podrimaos usar condicionales pero se acostumbra usar la estructura switch-case
+    switch (action.type) {
+        // el objeto action tiene principalmnete dos propiedades en esta cuestion de los reducer:
+        // el tipo de accion "type"
+        // payload : es el valor que puede existir o no y que le vamos a pasar a  nuestra funcion reductora 
+        case "INCREMENT":
+            return{contador: state.contador + 1};
+        case "DECREMENT":
+            return{contador: state.contador - 1};
+        default:
+            return state;
+    }
+    
+}
+
+const Contador = () => {
+    //const [contador, setContador] = useState(0);
+    //la variable contador la vamos a remplazar por una useReducer
+    // se va a destrucutar la variable de estado y la funcion que va a despachar la actualizacion
+    // la funcion useReducer recibe 3 parametros, la funcion reductora(la tendriamos que tener definida fuera del componente), la variable de inicalState
+    //el tercer parametro es una funcion que nos permite (si queremos hacer una transformacion al estado incial), podemos hacer una funcionm hacer una modificacion, y asi para que carge ya con la tranformacion/modificacion. ESte tercer parametro es opcional, en este caso no lo usaremos
+    const [state, dispatch] = useReducer(reducer, initialState)
+
+    /*el dispatch va a recibir el objeto de la accion que se va a lanzar */
+    const sumar =()=> dispatch({type:"INCREMET"});
+    const restar = ()=> dispatch({type: "DECREMENT"});
+
+    return (
+        <div style={{textAling:"center"}}>
+            <h2>Contador Reducer</h2>
+            <nav>
+                <button onClick={sumar}>+</button>
+                <button onClick={restar}>-</button>
+            </nav>
+            <h3>{state.contador}</h3>
+        </div>
+    )
+}
+
+export default Contador;
+
+```
+
+### Reducers Hook useReducer
+- `contador.js`:
+```js
+import { useReducer } from "react";
+ 
+const initialState = {contador:0};
+
+//
+const TYPES = {
+    INCREMENT: "INCREMENT",
+    DECREMENT: "DECREMENT",
+    INCREMENT_5: "INCREMENT_5",
+    DECREMENT_5: "DECREMENT_5",
+    RESET:"RESET"
+}
+
+function reducer(state, action){ 
+
+    switch (action.type) {
+        //las opciones se pusieron en mayuscula por que se consideran constantes que nunca van a cambiar y dehecho la buena practica es que tengamos un objeto donde tengamos los diferentes tipos de acciones que nuestra aplicacion va hacer 
+        //esto se hace con la intencion de que no tengamos errores
+        case TYPES.INCREMENT_5:
+            //aqui en lugar de un +5 es +action por que el tipo de la accion y el payload estan dentro de action
+            return{contador: state.contador + action.payload};
+        case TYPES.INCREMENT:
+            return{contador: state.contador + 1};
+        case TYPES.DECREMENT:
+            return{contador: state.contador - 1};
+        case TYPES.DECREMENT_5:
+            return{contador: state.contador - action.payload};
+        case TYPES.RESET:
+            return initialState;
+        default:
+            return state;
+    }
+    
+}
+
+const Contador = () => {
+    const [state, dispatch] = useReducer(reducer, initialState)
+
+    const sumar =()=> dispatch({type:TYPES.INCREMENT});
+    const restar = ()=> dispatch({type: TYPES.DECREMENT});
+    //EL PAYLOAD ES EL VALOR QUE LE ESTAMOS PASANDO
+    const sumar5 =()=> dispatch({type:TYPES.INCREMENT_5, payload: 5});
+    const restar5 = ()=> dispatch({type: TYPES.DECREMENT_5});
+
+    const reset = ()=> dispatch({type: TYPES.RESET});
+
+    return (
+        <div style={{textAling:"center"}}>
+            <h2>Contador Reducer</h2>
+            <nav>
+                <button onClick={sumar5}>+5</button>
+                <button onClick={sumar}>+</button>
+                <button onClick={reset}>0</button>
+                <button onClick={restar}>-</button>
+                <button onClick={restar5}>-5</button>
+            </nav>
+            <h3>{state.contador}</h3>
+        </div>
+    )
+}
+
+export default Contador;
+```
+
