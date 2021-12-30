@@ -6610,3 +6610,74 @@ const Contador = () => {
 export default Contador;
 ```
 
+## REDUX
+
+### Introducción 
+Redux es una libreria que nos permite manejar de una manera ordenada, predecible y escalable el estado de nuestra aplicacion.
+
+Personalmente redux se va a utilizar cuando la aplicacion sea mediana o grande en complejidad. EN aplicaciones medianas o grandes donde tenemos una gran complejidad de logica, donde tenemos una gran cantidad de componentes, es el tener una estructura ordenada nos va a permitir tener un mejor control sobre la aplicacion.
+
+Redux nos permite tener un solo origen, independientemente que tengamos diferentes tipos de datos o logica de negocio en una aplicacion.
+
+Aun que forma parte de las tecnologias de react sige siendo compatible con angular, vue.js, incluso puramente javascript.
+
+**Caracteristicas de redux**:
+- Predecubke
+- Centralizado 
+- Debuggable 
+- Flexible
+
+**Teoria y Conceptos**:
+- **Store**: debe de haber un solo almacenamiento global, dentro puede contener varios estados.
+- **Dispatch**: Van a ser los disparadores de eventos que van a ejecutar una accion, y esa accion puede adicionalmente e internamente contener un payload(manda los adatos que previamente se van a actualizar) 
+- **Action**: objeto JS con 2 propiedades: type y payload(Datos).
+- **Subscribe**: es como un listener de los eventos de javascript, es un manejador de eventos para el state.
+- **Reducers**: funciones puras que van a getionar la accion.
+
+###  Estructura de archivos
+
+instalaremos:
+```
+npm install redux react-redux redux-devtools
+```
+si aparecen errores al momento de instalar intenta:
+```
+npm install redux react-redux redux-devtools --legacy-peer-deps
+```
+- **Actions**
+ahora en el organizamiento de las carptetas vamos a crear una carpeta dentro de `src` llamda `actions`.`src/actions/`.
+
+- **types**
+La siguiente carpeta que vamos a crear es una carpeta llamada **types**, el objeto actions tiene el tipo y el payload(Data), lo que nos sugiere redux es separar los tipos de acciones que vayamos a ejecutar y en un archivo que se le suele llamar `index.js` y ahi vamos a poner todas las acciones que tenga nuestra aplicacion.`src/types/index.js`.
+
+- **reducers**
+AHora necesitamos una carpeta donde vayan los reducers(funciones puras que van a actualizar el listado). `src/reducers/`. Lo ideal es tener un archivo por cada funcion reductora.
+
+Independientemente que tengamos cada **reducer** para cada funcion reductora, aparte tenemos que tener un archivo que los combine todos en su totalidad en este caso sera un archivo llamado index.js.`src/reducers/index.js`. Y este va a centralizar todos los reducers que tenga nuestra aplicacion, como va a acentralizar todos los reducer vamos a llamar un metodo de redux llamado `combineReducers`.
+```js
+import {combineReducers} from "redux";
+
+//la funcion de combineReducers lo unico que recibe es un objeto
+//en cada propiedad del objeto va a recibir cada uno de los reducers que tiene.
+const reducer = combineReducers({});
+
+export default reducer;
+```
+
+- **store**
+ahora crearemos la carpeta de store, esta carpeta haria referencia al store, es decir al contenedor global de todos los estado de nuestra apliacion en un archivo `index.js` `src/store/index.js`.
+```js
+import {createStore} from 'redux';
+//sin acele incapie en el archivo index.js automaticamnete lo hara al se;alarle la carpeta reducers
+import reducer from "../reducers"; 
+
+const store = createStore(reducer);
+
+//para que este detectando cualquier cambie que este surgiendo en el estado hay que suscribir
+
+//si quisieramos que llegara a hacer alguna cosa adicional algo que se ejecute cuando hay un cambio lo podmeos hacer en esta funcion
+store.subscribe(() => console.log(store));
+
+
+export default store;
+```
