@@ -6681,3 +6681,142 @@ store.subscribe(() => console.log(store));
 
 export default store;
 ```
+
+### Flujo de Trabajo
+
+Creamos un nuevo archivo `src/components/COntador.js`:
+```js
+const Contador = () => {
+    return (
+        <div>
+            <h2>Contador Redux</h2>
+        </div>
+    )
+}
+
+export default Contador;
+```
+
+y luego lo importamos a la `App.js`:
+```js
+import './App.css';
+import {Provider} from "react-redux";
+import store from "./store"
+import Contador from './components/Contador';
+
+function App() {
+    //declaramos en el componente de la aplicacion el provider
+    //este provider ya provee todo ese store
+    // todos los componentes que esten dentro de este provider van a poder tener accceso al almacenamiento de redux
+  return (
+    <Provider store={store}>
+      <div style={{textAling: "center"}}>
+        <h1>Redux</h1>
+        <Contador/>
+      </div>
+    </Provider>
+  );
+}
+
+export default App;
+```
+
+Ahora primero tener que definir los tipos de acciones que se van a ver involucradas con esta funcionalidad del contador, vamos a abrir el arcvhivo `src/types/index.js`:
+```JS
+//contador
+// En los reducer se puede hacer a manera de objeto 
+// pero se sugiere que sea a amnera de constante 
+export const INCREMENT = "INCREMENT";
+export const DECREMENT = "DECREMENT";
+export const INCREMENT_5 = "INCREMENT_5";
+export const DECREMENT_5 = "DECREMENT_5";
+export const RESET = "RESET";
+
+//shopping card
+
+//crud
+```
+
+Ahora vamos a crear el archivo de las acciones exclusivamente para el contador `src/actions/contadorActions.js`, en esta ocacion usamos lowercamercase ya que los actions como los reducers no son componentes.
+
+```JS
+// vamos a exportar por defecto las funciones que vana ahcer referencia a los tipos de acciones que sea n definido
+
+import { DECREMENT, DECREMENT_5, INCREMENT, INCREMENT_5, RESET } from "../types";
+
+export const sumar = () => ({type: INCREMENT});
+
+export const restar = () => ({type: DECREMENT});
+
+export const sumar5 = () => ({type: INCREMENT_5, payload: 5});
+
+export const restar5 = () => ({type: DECREMENT_5, payload: 5});
+
+export const reset =() => ({type:RESET});
+```
+
+El siguiente paso es crear la funcion reducara, va a ser la funcion que va a tener los switch y dependiendo del type va a sumar o restar.`src/reducers/contadorReducer.js`.
+```js
+const initialState = 0;
+export default function contadorReducer(state = initialState, action){
+    switch (action.type) {
+        case INCREMENT:
+            return state + 1;
+        case DECREMENT:
+            return state - 1;
+        case INCREMENT_5:
+            return state + action.payload;
+        case DECREMENT_5:
+            return state - action.payload;
+        case RESET:
+            return initialState;
+        default:
+            //cualquier otra accion que se este mandando retornara el estado anterio para que no sufra ningun cambio corrupto el estado de la apliacion 
+            return state;
+    }
+}
+```
+
+Ahora vamos a agregar el contadorReducer al reducer central`src/reducers/index.js`.
+```js
+import {combineReducers} from "redux";
+import contadorReducer from "./contadorReducer";
+
+//la funcion de combineReducers lo unico que recibe es un objeto
+//en cada propiedad del objeto va a recibir cada uno de los reducers que tiene.
+const reducer = combineReducers({
+    contador: contadorReducer
+});
+
+export default reducer;
+```
+
+EL siguiente paso es agregar esta logica al componente del `/components/Contador.js`. Vicularemos la logica con el uso de los despatch, para eso usaremos las hooks que trae la imprementacion de redux (react-redux) y con las redux-devtools para ver el manejo del estado en al consola del navegador.
+```js
+import {useSelector,useDispatch} from "react-redux";
+import {sumar5,sumar, reset, restar5, restar} from "../actions/contadorActions"
+
+const Contador = () => {
+    //con useSelector haremos uso del store
+    // este useSelector es como el useState de react, pero este nos permite acceder al estado de redux
+    const state = useSelector(state => state);
+    // los reducer usan los Dispatch para disparar las acciones, aqui es lo mismo
+    //como parametro recibe una funcion, pero en esta ocacion se lo agregaremos en el onCLick
+    const dispatch = useDispatch();
+    return (
+        <div>
+            <h2>Contador Redux</h2>
+            <nav>
+                <button onClick={()=> dispatch(restar5())}>-5</button>
+                <button onClick={()=> dispatch(restar())}>-1</button>
+                <button onClick={()=> dispatch(reset())}>0</button>
+                <button onClick={()=> dispatch(sumar())}>1</button>
+                <button onClick={()=> dispatch(sumar5())}>5</button>
+            </nav>
+            <h3>{state.contador}</h3>
+        </div>
+    )
+}
+
+export default Contador;
+```
