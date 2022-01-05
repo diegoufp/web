@@ -498,4 +498,177 @@ db.users.deleteMany({
 
 - `db.la_collection.drop()` : con esto eliminaremos una collecion de objetos.
 
-1:53:00
+## acceder a subconjuntos
+
+```js
+user13 = {
+    "address":{
+        "country": "MX"
+    }
+}
+```
+
+Para saber si es usuario radica el mexico, la consulta seria:
+```js
+db.users.findOne({
+    "address.country": "MX"
+})
+```
+
+Para agregar un atributo:
+
+```js
+db.users.updateMany(
+    {
+        "address": {$exists: false}
+    }
+    {
+        $set:{
+            "address": {
+                country: "MX"
+            }
+        }
+    }
+)
+```
+
+
+## filtrar sobre listas
+
+```js
+user15 = {
+    "comments": [
+        {
+            body: "Best curse",
+            like: false
+        }
+    ]
+}
+```
+
+Como ahora no vamos a filtar sobre un documento objetos si no sobre documentos que se encuentran dentro de una lista(array), vamos a utilizar `$elemMatch`, atravez de esta funcion seremos capaces de filtrar sobre atributos de documentos que se encuentren dentro de listados.
+
+```js
+db.users.findOne(
+    {
+        comments: {
+            $elemMatch : {
+                like: false
+            }
+        }
+    }
+)
+
+```
+
+Al utilizar `$elemMatch` ya estariamos trabajando los documentos dentro del listado.
+
+## agregar un nuevo elemento a un listado
+```js
+user13 = {
+    courses: [
+        "python",
+        "mongodb"
+    ],
+    "comments": [
+        {
+            "body": "Best curse",
+            "like": true
+        }
+    ]
+}
+
+```
+
+
+```js
+db.users.updateOne(
+    {
+        username: "user13"
+    },
+    {
+        $push: {
+            comments: {
+                like: false
+            }
+        }
+    }
+)
+```
+```js
+db.users.updateOne(
+    {
+        username: "user13"
+    },
+    {
+        $push: {
+            curses: "rust"
+        }
+    }
+)
+```
+Mediante `$push` seremos capaces de agregar elementos al final de la lista.
+
+## agregar elementos sobre un listado que se encuantra en un documento dentro dentro de otro listado
+
+```js
+user13 = {
+    courses: [
+        "python",
+        "mongodb",
+        "rust"
+    ],
+    "comments": [
+        {
+            "body": "Best curse",
+            "like": true
+        },
+        {
+                like: false,
+                "tags": [
+                    "bad"
+                ]
+        }
+    ]
+}
+
+```
+
+```js
+db.users.updateOne(
+    {username: "user13"},
+    {
+        $push: {
+            "comment.1.tags": "tutor"
+        }
+    }
+)
+```
+
+Pero hay que ser muy cuidadosos, siempre que especifiquemoz la posicion del documento que vamos a actualizar, no olvidemos el atributo definir el atributo que vamos a actualizar o en dado caso estariamos actualizando el documento(objeto) completo.
+
+## actualizar sin conocer la posicion
+
+```js
+db.users.updateOne({
+    {
+        username: "user13",
+        "comments.like": false  //nos permitira conocer el infice de los documentos dentro de la lista que queremos actualizar . Ya que de antemano nosotros no conocemos el indice
+
+    
+        // con esto le indicamos que queremos actualizar todos aquellos documentos
+        //cuyo username sea user13
+        // y dentro de los comentarios aquellos cumentos cuyo like sea igual a falso
+    },{
+
+        $set:{
+            // el signo de dolar $(sera un comodin) sera remplazado automaticamnete por el indice de todos aquellos comentarios que cumplan con la condicion ("comments.like": false)
+            "comments.$.body" : "Buen curso",
+            "comments.$.like" : true
+        },
+        $unset: {
+            "comments.$.tags": true
+        }
+    }
+});
+```
