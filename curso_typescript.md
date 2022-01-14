@@ -1,4 +1,26 @@
-# REACT Y TYPESCRIPT
+# [REACT Y TYPESCRIPT](https://www.typescriptlang.org/docs/handbook/react.html)
+
+## Introduccion a typescript
+Typecript es un lenguaje superconjunto de javascript desarrollado por microsoft.
+
+Lo que hace javascript es convertir todo el codigo de typescript ( archivo con terminacion `.ts`) a un archivo javascript y al final lo que va a terminar ejecutandose es el achivo javascript, esto quiere decir que podemos ejecutar typescript en todos los entornos donde se pueda ejecutar javacript y integrarlos a proyectos de javascript existentes.
+
+Typescript fue dise;ado para aplicaciones grandes.
+
+- **Arquitectura de typescript**:
+  - `language`:
+El lenguaje de typecript en pocas palabras es la sintaxiste de javascript para algunas otras caracteristicas, las cuales se les llama `type annotations`, las cuales permiten especificar el tipo de dato que se va a utilizar.
+
+Tiene una sintaxis muy cercana a los lenguajes orientados a objetos.
+
+  - `compiler`: 
+Convierte de archivos `.ts` a archivo `.js`.
+
+  - `language service`:
+Son herramientas de desarrollo que permiten autocompletar el codigo o informacion acerca de tu codigo 
+
+- **Lo que ofrece typescritp**:
+  - Static type checking(revision de tipado estatico)
 
 ## instalacion
 ```
@@ -251,3 +273,283 @@ function App() {
 }
 
 ```
+
+## EJEMPLO
+
+```jsx
+import ReactDOM from 'react-dom';
+import * as React from 'react';
+import App, { Appp } from './componentns/App';
+
+const app = document.getElementById('app');
+
+ReactDOM.render(
+    <>
+    <App title="ts react function"/>
+    <Appp title="ts react class"/>
+    </>, app);
+```
+
+- 1:
+```tsx
+import * as React from 'react';
+
+//podemos definir cuales seran los tipos de datos que vamos a poder manerjar dentro del componente 
+
+//componente class
+// <any,any>: le estamos indicando que vamos a colocar un tipo de dato any para las propiedades y un tipo de dato any para el
+
+export class Appp extends React.Component<any,any> {
+    render(){
+        return(
+            <>
+                <h1>{this.props.title}</h1>
+            </>
+        )
+    }
+}
+
+
+//componente function
+
+const App = ({title}:{title: any}) => {
+    return (
+        <>
+            <h1>{title}</h1>
+        </>
+    )
+}
+
+export default App;
+
+```
+
+- 2: propiedades
+```tsx
+import * as React from 'react';
+
+
+//componente class
+// ahora le estamos dadno mas infomacion al componente:
+// este componente necesita una propiedad llamda title que sera de tipo string
+// si no le asignamos la propiedad title va a adar un error
+
+export class Appp extends React.Component<IProps,any> {
+    render(){
+        return(
+            <>
+                <h1>{this.props.title}</h1>
+            </>
+        )
+    }
+}
+// con simplemente colocarle any podemos darle una interface o podemos crear nuestra propia interface especificando cuales son las propiedades
+// para nombrar la interface por lo usual se inicia con la letra "I" de interface y despues el nombre
+interface IProps {
+    title: string;
+}
+
+//componente function
+
+const App = (props : IProps) => {
+    return (
+        <>
+            <h1>{props.title}</h1>
+        </>
+    )
+}
+
+export default App;
+```
+
+- 3: estado
+```tsx
+import * as React from 'react';
+
+
+//componente class
+
+//ahora vamos a crear una interface para el estado
+interface IState{
+    task: [];
+}
+
+export class Appp extends React.Component<IProps,IState> {
+    constructor(props: IProps){
+        super(props);
+        // es necesario especificar la propiedad task en el state
+        this.state= {
+            task: []
+        };
+    }
+
+    render(){
+        return(
+            <>
+                <h1>{this.props.title}</h1>
+            </>
+        )
+    }
+};
+
+interface IProps {
+    title: string;
+}
+//componente function
+
+const App = (props : IProps) => {
+
+    const [state, setstate] = React.useState([]);
+
+    return (
+        <>
+            <h1>{props.title}</h1>
+        </>
+    )
+}
+
+export default App;
+
+```
+
+- 4: especificar tipo de dato
+```tsx
+import * as React from 'react';
+
+
+//componente class
+
+//ahora vamos a crear una interface para el estado
+interface IState{
+    task: [];
+}
+interface IProps {
+    title: string;
+}
+export class Appp extends React.Component<IProps,IState> {
+    constructor(props: IProps){
+        super(props);
+        this.state= {
+            task: []
+        };
+    }
+    //podemos especificar el tipo de dato
+    // en este caso "e" es un tipo de dato que hace referencia a un evento html :  React.FormEvent
+    // y este evento viene desde un evento fomulario: <HTMLInputElement> 
+    
+    handleNewTask = (e : React.FormEvent<HTMLInputElement>) =>{
+        e.preventDefault();
+    }
+
+    render(){
+        return(
+            <>
+                <h1>{this.props.title}</h1>
+                <form onSubmit={e => this.handleNewTask}></form>
+            </>
+        )
+    }
+};
+
+
+//componente function
+
+const App = (props : IProps) => {
+
+    const [state, setstate] = React.useState([]);
+    const handleNewTask = (e : React.FormEvent<HTMLInputElement>) =>{
+        e.preventDefault();
+    }
+
+    return (
+        <>
+            <h1>{props.title}</h1>
+            <form onSubmit={e => handleNewTask}></form>
+        </>
+    )
+}
+
+export default App;
+```
+
+- 5: exportar interface
+  - `Task.ts`:
+```ts
+export interface ITask{
+    id: number;
+    title: string;
+    description: string;
+    completed: boolean;
+}
+```
+
+  - `App.tsx`:
+```tsx
+import * as React from 'react';
+import {ITask} from "./Task"
+
+//componente class
+
+//vamos a indicarle que las tareas de la aplicacion es un arreglo que contiene multiples tareas:  tasks: ITask[]
+interface IState{
+    tasks: ITask[];
+}
+interface IProps {
+    title: string;
+}
+
+interface ITaskFormProps{
+
+}
+export class Appp extends React.Component<IProps,IState> {
+    constructor(props: IProps){
+        super(props);
+        this.state= {
+            tasks: []
+        };
+    }
+    
+    // crearemos un metodo para agregar una nueva tarea al estado
+    AddTask(task: ITask){
+        this.setState({
+            tasks: [...this.state.tasks, task]
+        })
+    }
+
+
+    handleNewTask = (e : React.FormEvent<HTMLInputElement>) =>{
+        e.preventDefault();
+    }
+
+    render(){
+        return(
+            <>
+                <h1>{this.props.title}</h1>
+                <form onSubmit={e => this.handleNewTask}></form>
+            </>
+        )
+    }
+};
+
+
+//componente function
+
+const App = (props : IProps) => {
+
+    const [state, setstate] = React.useState([]);
+    const handleNewTask = (e : React.FormEvent<HTMLInputElement>) =>{
+        e.preventDefault();
+    }
+
+    return (
+        <>
+            <h1>{props.title}</h1>
+            <form onSubmit={e => handleNewTask}></form>
+        </>
+    )
+}
+
+export default App;
+`
+```
+
