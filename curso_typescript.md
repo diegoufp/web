@@ -19,10 +19,211 @@ Convierte de archivos `.ts` a archivo `.js`.
   - `language service`:
 Son herramientas de desarrollo que permiten autocompletar el codigo o informacion acerca de tu codigo 
 
-- **Lo que ofrece typescritp**:
-  - Static type checking(revision de tipado estatico)
+**Lo que ofrece typescritp**:
+- **Static type checking**(revision de tipado estatico):
+    - (optional) check adn assign types 
+    - Compilation Errors(Reduce bugs,assuies), estos errores aparecen cuando escribes el codigo cuando ejecutas el codigo, no remplaza los test, puedes seguir usandolos.
+    - mas descripcion del codigo
+- **Types**:
+    - String, Number, Boolean, Array, Any, Void, Null, Tuple, Enums, Generics
+    - podemos usar los tipos de datos de javascript siemplemente ahora los podemos enlazar a otros tipos de datos nuevos
+    - Classes:
+        - No protoTypes
+        - encapsulation
+        - inheritance
+        - modifiers
+
+## TYPES
+```TS
+var myString = "hello";
+// al simplemente nosotros asignarle esta declaracion de un estring luego no vamos a poder cambiar el tipo de dato que esta pueda almacenar
+myString = 22; //esto no lo podemos hacer por que generar una advertencia, si ignoramos esta advertencia no ocurrira nada por que al momento de ejecutar el archivo .ts este lo convertira a codigo js y no ocurrira ningun error
+// pero es importante observar estas advertencias por que es un posible error del codigo 
+```
+```ts
+//nosotros tambien podemos indicarle explisitamente que una varibale contendra cierto tipo de dato esto lo hacemos con dospuntos despues de la variable
+var myString: string = "hello";
+var myNumber: number = 22;
+var myBool: boolean = true;
+
+//si queremos que una variable acepte cualqueir tipo de datos podemos asignarle any
+var myVar: any = "hello";
+myVar = 22;
+
+```
+**strings**
+```ts
+//strings
+var myString: string = "22";
+var myNumber: number = 22;
+
+document.write(myString);//lo que hara es que en la pagina web aparecera un 22
+
+document.write(myNumber);// saldra un error por que el type number no es asignable como parametro de un tipo string 
+document.write(myNumber.toString());// ahor aya no saldra un error por que lo convertimos a un string
+```
+**arrays**
+```ts
+var StringArray = ["","",""];
+StringArray = [1,2,3];//aqui marcara un error por que al principio se indico que erra un arreglo de strings y despues un arreglo denumeros
+//para solucionar este error tenemos que indicar que va a contener cualquier tipo de dato dento del arreglo:
+var StringArray:any[] = ["","",""];
+
+//tambien s ele puede indicar un tipo de dato especifico dentro del arreglo
+var StringArray: string[] = ["","",""];
+var numberArray: number[] = [1,2,3];
+
+//tupls
+//los tupls son arreglos con una estructura definida 
+var strnumtuple: [string, number];
+strnumtuple = ["hello", 22];
+strnumtuple = [22, "hello"];// aqui ocurre un error por que el 22 no es un string y el "hello" no es un number
+strnumtuple = ["hello", 22, 22, "hello"]; //aqui ocurriria un error po que se estan asignando 4 datos a un array donde permite 2
+```
+
+**void , undefined, null**
+```ts
+//void es un tipo de dato vacio, si lo ponemos en un return de funcion entonces indicamos la funcion no retorna nada
+// undefined es un tipo de dato indefinido hasta el momento
+// null un tipo de dato nulo
+let myVoid: void = undefined;
+let mynull: null = null;
+let myundefined:undefined  = undefined;
+```
+
+**functions**
+```ts
+// de esta manera "num1: number" especificamos el tipo de dato que va a aceptar la function
+function getsum (num1: number, num2: number){
+    return num1 + num2;
+}
+
+// de esta manrea "(num1, num2):number" indicamos el tipo de dato que va a retornar la funcion
+
+function getsum (num1, num2):number{
+    return num1 + num2;
+}
+// de esta manera inficamos que aceptara tipo de dato number o string: number | string
+let mySum = function getsum (num1: number | string, num2:number | string):number{
+    if(typeof(num1) === "string"){
+        //hacemos esto por que sino saldra un error
+        num1 = parseInt(num1);
+    }
+    if(typeof(num2) === "string"){
+        num2 = parseInt(num2);
+    }
+    return num1 + num2
+}
+
+
+// para inficar que es un parametro opcional ponemos el signo de interrogacion ?
+function getnam (firstName: string, lastName?:string):string{
+    if(lastName == undefined){
+        return firstName;
+    }
+    return `${firstName} ${lastName}`;
+}
+//como ya indicamos que el segundo parametro es opcional entonces ya no generara un error en la siguiente linea de codigo:
+getnam("oscar")
+
+```
+### interfaces
+```ts
+// podemos definir la estructura del objeto que esperamos como parametro: todo: {title: string; text:string}
+// aqui le estamos inficando que el objeto todo tiene las propiedades title y texto las cuales son string
+
+function showTodo(todo: {title: string; text:string}){
+    console.log(`${todo.title} - ${todo.text}`)
+}
+
+showTodo({
+    title: `Eat Dinner`,
+    text: "lorem"
+})
+
+
+//existen las interfaces que es una manera de definir anticipadamnete la estructura de los parametros
+interface ITodo {
+    title: string;
+    text: string;
+}
+
+function showTodo(todo: ITodo){
+    console.log(`${todo.title} - ${todo.text}`)
+}
+//esta interface tambien la ponemos usar para la asignacion de type en variables de objetos: myTodo : ITodo
+const myTodo : ITodo = {
+    title: `Eat Dinner`,
+    text: "lorem"
+}
+
+showTodo(myTodo)
+```
+
+### class
+```ts
+//clases
+class User {
+    private name: string;
+    //con el signo de interrogacion le indicamos que la propiedad es opcional(puede o no existir)
+    public email?: string;
+    //tambien estamos protegiendo cierta informacion para que no se pueda acceder a ella desde afuera de la clase
+    protected age?: number;
+
+    
+    constructor (name: string, age?: number, email?: string){
+        this.name = name;
+        this.age = age;
+        this.email = email;
+    }
+
+    register(){
+        console.log(`${this.name} is registed`)
+    }
+
+    showMeAge(){
+        return this.age;
+    }
+
+    public AgeInYears(){
+        return this.age + " years";
+    }
+
+    payUnvoce(){
+        console.log(`${this.name} paide invoce`)
+    }
+}
+
+let john = new User("string", 17, "hola@gmail.com")
+```
+
+**herencia**
+```ts
+
+class Member extends User{
+    id: number;
+    constructor(id, name,email,age){
+        super(name,email,age);
+        this.id = id;
+    }
+    //para heredar un metodo
+    payInvoce(){
+        super.payInvoce();
+    }
+}
+
+let gordon = new Member(1,"string", 17, "hola@gmail.com");
+gordon.payInvoce();
+```
 
 ## instalacion
+si no usamos werbpack entonces tenemos que crear los archivos de typescript con terminacion `.ts` pero cuando los enlacemos al `.html`, dentro de este mismo tenemos que escribir el nombre del archivo typescript pero con terminacion `.js`. Al momento de ejecutarlo en la consola sera como `tsc ejemplo.ts` al momento de hacer esto se creara un nuevo archivo con terminacion `.js`, este nuevo archivo es la conmipilacion del archivo `.ts`
+
+Para estar evitando compilar cada vez que se haga un cambio en el archivo `.ts` podemos ejecutar en la taerminal: `tsc nombre_archiv.ts -w`.
+
+
+
+
 ```
 npx create-react-app@5.0.0 react-tasks-app --template typescript
 ```
