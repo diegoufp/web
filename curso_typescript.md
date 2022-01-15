@@ -44,6 +44,7 @@ myString = 22; //esto no lo podemos hacer por que generar una advertencia, si ig
 //nosotros tambien podemos indicarle explisitamente que una varibale contendra cierto tipo de dato esto lo hacemos con dospuntos despues de la variable
 var myString: string = "hello";
 var myNumber: number = 22;
+// number incluye todos los numeros , flotantes, hexadecimales,binarios
 var myBool: boolean = true;
 
 //si queremos que una variable acepte cualqueir tipo de datos podemos asignarle any
@@ -62,6 +63,20 @@ document.write(myString);//lo que hara es que en la pagina web aparecera un 22
 document.write(myNumber);// saldra un error por que el type number no es asignable como parametro de un tipo string 
 document.write(myNumber.toString());// ahor aya no saldra un error por que lo convertimos a un string
 ```
+**object**
+```ts
+const customer: 
+{
+    name: string,
+    age: number
+}
+= {
+    name: "hector",
+    age: 9
+}
+
+```
+
 **arrays**
 ```ts
 var StringArray = ["","",""];
@@ -79,7 +94,31 @@ var strnumtuple: [string, number];
 strnumtuple = ["hello", 22];
 strnumtuple = [22, "hello"];// aqui ocurre un error por que el 22 no es un string y el "hello" no es un number
 strnumtuple = ["hello", 22, 22, "hello"]; //aqui ocurriria un error po que se estan asignando 4 datos a un array donde permite 2
+
+// para que un array acepte datos type number y string:
+const data:(number|string)[] = [1,2,3,"hola"]
 ```
+
+**enum**
+nos permite llevar acabo la declaracion de identificadores constantes globales enumerados.
+`enum{admin,user}`
+```ts
+enum colors {red = "#ff0000", blue = "#0000ff", green = "#00ff00"}
+//de forma automatica los valores de la enumaracion enum aumentan en 1
+
+
+const preferences = {
+    fontSize: 14,
+    fontFamily: "Time New Roman",
+    color: colors.red
+}
+
+if(preferences.color === colors.red){
+    console.log("color red")
+}
+```
+**any**
+Un tipo de dato que es practicamnete cualquier valor
 
 **void , undefined, null**
 ```ts
@@ -91,8 +130,37 @@ let mynull: null = null;
 let myundefined:undefined  = undefined;
 ```
 
+**literales**
+```ts
+//indicaremos una cadenas especial especifica en lugar de un tipo de dato
+function process(browser: "firefox" | "chrome"){
+    console.log("correct")
+}
+process("firefox")// esto es valido
+process("hola")// esto es invalido ya que aun que tambien es un string no es el string especifico "firefox" o "chrome"
+
+//con esto usamos lo string literals para llevar validaciones directamente sobre una funcionalidad
+
+//esto tambein se puede tranpolar a numeros
+```
+**Alias de tipos de dato
+```ts
+//podemos llevar acabo la declaracion de los types para poderlos reutilizar 
+// la palabra reservada que nos va a permitir esta funcionalidad es "type"
+type browser = "firefox" | "chrome";
+
+function proceso(browser: browser){
+    console.log("correct")
+}
+
+proceso("firefox")
+```
 **functions**
 ```ts
+//para que una variable solamente acepte funciones
+let calculator: Function;
+
+
 // de esta manera "num1: number" especificamos el tipo de dato que va a aceptar la function
 function getsum (num1: number, num2: number){
     return num1 + num2;
@@ -127,6 +195,25 @@ function getnam (firstName: string, lastName?:string):string{
 getnam("oscar")
 
 ```
+```ts
+function CalculateRectArea(base:number, height:number){
+    return base * height
+}
+
+function printArea(result:number){
+    console.log("result: " + result)
+}
+
+//let calculador: function; su solo inficamos que acepta funciones entonces el resultado sera undefined y no sabremos porque
+let calculator: (base: number, h:number) => number;//con esto indicamos cual es el tipo de dato que queremos nosotros esperar de una funcion
+//dentro del parentensis vamos a poder especificar cuales son los parametros que esperamos recibir en la funcion
+// las letras que asignamos dentro de los parentesis pueden ser cualquiera, lo unico importnate es asegurarse de tener el numero correcto de parametros de la funcion que quieras especificar
+calculator = CalculateRectArea;
+calculator = printArea; //esta linea de codigo generara un error ya que devuuelve un tipo de dato void
+
+console.log(calculator(2,10))
+```
+
 ### interfaces
 ```ts
 // podemos definir la estructura del objeto que esperamos como parametro: todo: {title: string; text:string}
@@ -754,3 +841,6 @@ export default App;
 `
 ```
 
+https://www.youtube.com/watch?v=ll80pcKPJ2Y&t=3620s
+
+1:48
