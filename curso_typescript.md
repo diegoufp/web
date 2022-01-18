@@ -841,6 +841,90 @@ export default App;
 `
 ```
 
-https://www.youtube.com/watch?v=ll80pcKPJ2Y&t=3620s
+## callbacks
 
-1:48
+```ts
+// una callback o cb es una functionalidad que puedes ejecutar despues de llevar acabo cierta tarea
+// en pocas palabras se acepta como paametro una function
+
+// se puede indicar la estrucutra del tipo de function que queremos recibir como parte de este callback
+// entre los parentecis estamos indicando cual es el dato de entrada de la caallback: cb:(result: number)
+// y despues de la flecha vamos a indicar cual es el tipo(acepta cualquier tipo) de retorno que queremos para la callback
+// esta ocacion como ejemplo vamos a usar el tipo de dato void el cual indica que no se va a retornar nada
+function proceso( n1:number,n2:number, cb?:(result: number) => void){
+    const result = n1 + n2;
+    if(cb){
+        cb(result);
+    }
+}
+
+proceso(10,10,(x)=>{console.log(x)})
+```
+
+## tipo de dato unknown
+Existe ocaciones en las cuales deberemos declarar una variable pero sin conocer realmente que tipo de dato contendra, regularmente esta informacion viene de contenido dinamico.
+
+En estos casos queremos proporcionar un tipo que le diga al compilador y a los futuros desarrolladores que la variable podria ser cualquier cosa esto lo podemos hacer gracial al tipo de dato **unknown**.
+
+```ts
+let userInput: unknown = 4;
+userInput= "hello";
+userInput = false;
+```
+- **any vs unknown**
+```ts
+//diferencias entre tipo de dato any y unknown
+//la primera difetencia es que si primos le indicamos que el tipo de dato va a ser unknown
+let userInput: unknown = 4;
+//despues asignamos diferntes valores
+userInput= "hello";
+userInput = false;
+//y despues tratamos de asignar ese valor a una nuevavariable va a salir una advertencia
+const number1: number = userInput;
+// esto ocurre por que El tipo 'desconocido(unknown)' no se puede asignar al tipo 'número'.
+
+//sin embargo si en lugar de primero asignarle unknown le asignamos any este error no ocurre
+let userInput: any = 4;
+userInput= "hello";
+userInput = false;
+
+const number1: number = userInput;//aqui ya no aparece la advertencia
+
+```
+
+Otra cosa que puede hacer el tipo de dato **unknown** es que nosotros podemos llevar acabo ciertas validaciones para asegurarnos que estamos trabajando con un cierto tipo de dato en concreto y en cuanto validemos vamos a podemos llevar acabo operaciones sobre el tipo de dato especifico.
+```ts
+let userInput: unknown = 4;
+userInput= "hello";
+userInput = false;
+if(typeof userInput === "number"){
+    // cuando hacemos esta validacion typecript ya nos da la advertencia antes mencionada
+    const number1: number = userInput;
+    // unknown nos obliga a realizar validaciones de dato pero any se puede usar sin validaciones dato
+}
+```
+
+## tipo de dato never
+EL tipo de dato **never** nos permite representar el tipo de valores que nunca ocurren.
+
+Por poner un ejemplo, never, es el tipo de returno para una expresion de funcion que siempre arroja una excepcion o una que nunca devuelve algun tipo de valor.
+```ts
+// para este tipo de functiones usamos el tipo de dato never el cual inca que va a retornar absolutamente nada
+function err(message:string):never{
+    throw new Error(message);
+    //console.log("message"); //esta linea ya nunca se va a ejecutar por que antes de esta se lanza la excepcion
+}
+
+// si creamos otra funcion que retorne la funcion anterior esta por defaul indicara que tambien tiene el tipo never apesar de que tenga un return
+function fail(){
+    return err("internal Error");
+}
+
+
+// otro ejemplo de uso sera para tipo de functiones loop
+function infiniteLoop():never{
+    while(true){
+
+    }
+}
+```
