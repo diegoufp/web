@@ -1,40 +1,71 @@
 # [GraphQL](https://graphql.org/)
 
-Para empezar a utilizarlo vamos a tener que crear un servidor.
+Para empezar a utilizar GraphQL hay herramientas como por ejemplo [Apollo](https://www.apollographql.com/).
 
-E este caso usaremos una base de datos de [mongodb](https://docs.mongodb.com/manual/tutorial/install-mongodb-on-ubuntu/) e iniciamos el servidor con el comando.
-- iniciar servidor de mongo
+**Apollo** es una herramienta que brinda como poder crear un servidor y como integrarlos con framework del fort-end para oider intercambiar y recibir datos.
+
+## Inicializacion 
+
+Crearemos una carpeta para el backend. En la carpeta backend ejecutamos:
 ```
-sudo systemctl start mongod
+npm init -y
+npm i graphql-yoga mongoose
 ```
-si sale un error `Failed to start mongod.service: Unit mongod.service not found.` por el codigo anterior, ejecutar:
+- `graphql-yoga`: sirve para crear auna api de graphql.
+- `mongoose`: permite conectarnos a mongodb
+
 ```
-sudo systemctl daemon-reload
+npm i @babel/cli @babel/core @babel/node  @babel/preset-env nodemon -D
+```
+- `nodemon`: se encarga de recargar el servidor cada vez que haya un cambio 
+- `babel`: el es una herramienta que nos permite usar codigo moderno de javascript y luego convierte ese codigo a uno que sea soportado por todos los navegadores
+
+Despues creamos otra carpeta llamada `backend/src` y dentro de src vamos a crear un archivo que va arrancar todo el servidor `backend/src/index.js`
+
+En la carpeta src vamos a editar los `scripts`:
+```
+"scripts": {
+    "dev": "nodemon src/index.js --exec babel-node"
+}
+```
+- `--exec babel-node`: es una instruccion para que primero convierta el codigo y despues lo ejecute
+
+
+Ahora que se a creamo el comando se puede ejecutar:
+```
+npm run dev
+```
+Este compando ejecutara con nodemosn nuestro proyecto y cada vez que se haga un cambio se vuelve a ejecutar.
+
+**babel**
+
+Ahora crearemos el archivo `.babelrc` al mismo nivel que `package.json`.
+
+Este archivo `.babelrc` va a servir para decirle a babel que codigo va a interpretar. Dentro de `.babelrc`:
+```js
+{
+    "presets": [
+        ["@babel/env"]
+    ]
+}
 ```
 
-- status de mongo
-```
-sudo systemctl status mongod
+**graphql-yoga**
+
+Vamos a crear otro archivo en la ruta `backend/src/server.js`, en este archivo `server.js` vamos a escribir la configuracion de graphql-yoga.
+
+Vamos a crear otro archivo en la ruta `backend/src/database.js`, en este archivo `database.js` va a ser el encargado de tener la conexion con la base de datos.
+
+Se creara una carpeta en la ruta `backend/src/models/` donde se va a definir que es lo que vamos a estar guardando en la base de datos(los modelos de datos).
+
+Se creara una carpeta en la ruta `backend/src/graphql/` donde se guardara los archivos relacionado con la api.
+
+Dentro del archivo :
+- `server.js`:
+```js
+
 ```
 
-- Opcionalmente, puede asegurarse de que MongoDB comenzará después de un reinicio del sistema emitiendo el siguiente comando:
-```
-sudo systemctl enable mongod
-```
+https://www.youtube.com/watch?v=mOXabxAUkzg 
 
-- Detener MONGODB:
-```
-sudo systemctl stop mongod
-```
-
-- Reiniciar MONGODB:
-```
-sudo systemctl restart mongod
-```
-
-- Inicie una mongoshsesión en la misma máquina host que mongod. Puede ejecutar mongosh sin ninguna opción de línea de comandos para conectarse a un mongodservidor que se está ejecutando en su host local con el puerto predeterminado 27017.
-
-activa el shiel de mongo
-```
-mongosh
-```
+8:12
