@@ -20,6 +20,17 @@ Podemos
 
 ## Inicializacion 
 
+[uuid](https://github.com/uuidjs/uuid) : sirve para crear id unicos con el comando:
+```
+npm i uuid
+```
+y se importa:
+```js
+import {v3 as uuid} from "uuid"
+```
+Para no tener que usar `requiere()` en la importaciones de node podemos usart `"type: module"` en el `package.json` al mismo nivel que `"scripsts"` *no* dentro de este mismo. De esta forma en lugar de usar `requiere()` podemos usar `import`
+
+
 intalaremos apollo server y graphql:
 ```
 npm i apollo-server graphql
@@ -56,7 +67,7 @@ typpe Person {
 
 ```js
 //primero tenemos que importar graftql
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 //para describir los datos creamos una constante
 
@@ -78,7 +89,7 @@ const typeDefs = gql`
 ```
 
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 // cuando queramos hacer peticiones a graphql server
 // tenemos que describir tambien las peticiones que se pueden hacer 
@@ -105,7 +116,7 @@ const typeDefs = gql`
 Para hacer una consulta necesitamos las definiciones de los datos y tambien como los **resolvers** los cuales son donde y como se resulve la informacion.
 
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 const typeDefs = gql`
     type Person {
@@ -135,7 +146,7 @@ const resolvers = {
 Ahora que tenemos tanto las definiciones de datos como los resolvers podemos crear el servidor:
 
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 const typeDefinitios = gql`
     type Person {
@@ -252,7 +263,7 @@ const persons = [
 ]
 ```
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 // indicar un parametro es parecido a un metodo
 // le indicamos que tiene un parametro name que es de tipo string y ademas es obligatorio y que devuelva una persona: 
@@ -371,7 +382,7 @@ const persons = [
 ]
 ```
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 //para que podamos crear los campos que no existan en los datos es importante definirlos en el typeDefinitios
 const typeDefinitios = gql`
@@ -437,7 +448,7 @@ const persons = [
 ]
 ```
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 //en lugar de tener el address como un string(en el Person) lo vamos a ponerlo en otro type
 
 // un type lo podemos usar en otro type
@@ -509,7 +520,7 @@ Es importante diferenciar en como tienes la informacion en la base de datos y co
 En como tengas la informacion en la base de datos no tiene que ser una prolongacion en como llega al cliente, lo que se hace en graphql es adaptar esta informacion a las diferentes solicitudes para que se puedan consumir mas facilmente.
 
 ```js
-import {gql} from "apollo-server";
+import {ApolloServer,gql} from "apollo-server";
 
 const typeDefinitios = gql`
     type Address {
@@ -586,3 +597,346 @@ El resultado sera correcto:
 
 ```
 Nos da una respuesta satisfactoria de address cuando en realidad esta no se encuentra en el objeto original
+
+## Mutation
+
+Mutation se refiere a que vamos a cambiar los datos.
+
+En esta ocacion sera un ejemplo para agrgar datos
+
+```js
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona",
+        street: "calle1"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro",
+        street: "calle2"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza",
+        street: "calle3"
+    }
+]
+```
+```js
+import {ApolloServer,gql} from "apollo-server";
+import {v1 as uuid} from "uuid"
+
+//tenemos que definir las mutaciones con type
+// la mutacion normalmente devuelve la persona que se a agregado/modificado addPerson():Person
+const typeDefinitios = gql`
+    type Address {
+        street: String!
+        city: String!
+    }
+
+    type Person {
+        name: String!
+        address: Address!
+    }
+
+
+    type Query {
+        personCount: Int!
+        allPersons: [Person]!
+        findPerson(name: String!) : Person
+    }
+
+    type Mutation{
+        addPerson(
+            name:String!
+            street: String!
+            city: String!
+        ):Person
+    }
+`
+
+//en este caso vamos a agregar el objeto de la nueva persona con el metodo .push(), pero si tuvieramos una base datos lo hariamos de otra forma: persons.push(person)
+
+const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: () => persons
+        findPerson: (root, args) => {
+            const {name} = args
+            return persons.find(person => person.name === name)
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) => {
+            const person = {...args/*, id: uuid()*/}
+            persons.push(person) 
+            return person
+        }
+    },
+    Person:{
+        address: (root) => {
+            return {
+                street: root.street,
+                city: root.city
+            }
+        }
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs: typeDefinitios,
+    resolvers: resolvers
+})
+
+
+server.listen().then(({url}) => {console.log(url)})
+```
+
+ahora si hacemos uso del Graphql PlayGround:
+```js
+mutation {
+    addPerson(
+        name: "aborja"
+        street: "calle4"
+        city: "Albacete"
+    )
+}
+```
+si solamente enviamos esto nos va a dar un error, esto es por que al agregar una persona tenemos que tener una seleccion de sus campos, esto es por que a `addPerson` le hemos indicado que devuelva un `person`,`addPerson():Person`, por lo tanto tenemos que extraer los campos del Person:
+
+```js
+mutation {
+    addPerson(
+        name: "aborja"
+        street: "calle4"
+        city: "Albacete"
+    )
+}{
+    name
+    city
+    address {
+        city
+        street
+    }
+    /*id*/
+}
+```
+
+### validacion en las mutaciones
+
+[Tipos de errores de apollo](https://www.apollographql.com/docs/apollo-server/data/errors/)
+
+```js
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona",
+        street: "calle1"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro",
+        street: "calle2"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza",
+        street: "calle3"
+    }
+]
+```
+```js
+import {UserInputError,ApolloServer,gql} from "apollo-server";
+import {v1 as uuid} from "uuid"
+// UserInputError es para crear alertas de error mas especificas
+
+const typeDefinitios = gql`
+    type Address {
+        street: String!
+        city: String!
+    }
+
+    type Person {
+        name: String!
+        address: Address!
+    }
+
+
+    type Query {
+        personCount: Int!
+        allPersons: [Person]!
+        findPerson(name: String!) : Person
+    }
+
+    type Mutation{
+        addPerson(
+            name:String!
+            street: String!
+            city: String!
+        ):Person
+    }
+`
+//en esta ocacion vamos a agregar una validacion para verificar que en name no sea de uno que ay exista
+//if(persons.find(p => p.name === args.name))
+const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: () => persons
+        findPerson: (root, args) => {
+            const {name} = args
+            return persons.find(person => person.name === name)
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) => {
+            if(persons.find(p => p.name === args.name)){
+                //vamos a crear un error especifico para estos casos o poner un error comun
+                //throw new Error("Name must be unique")
+
+                // a UserInputError le podemos pasar un segundo parametro para indicarle donde esta el problema
+                throw new UserInputError("Name must be unique", {invalidArgs: args.name})
+            }
+            const person = {...args/*, id: uuid()*/}
+            persons.push(person) 
+            return person
+        }
+    },
+    Person:{
+        address: (root) => {
+            return {
+                street: root.street,
+                city: root.city
+            }
+        }
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs: typeDefinitios,
+    resolvers: resolvers
+})
+
+
+server.listen().then(({url}) => {console.log(url)})
+```
+
+## ENUMS
+
+```js
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona",
+        street: "calle1"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro",
+        street: "calle2"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza",
+        street: "calle3"
+    }
+]
+```
+```js
+import {UserInputError,ApolloServer,gql} from "apollo-server";
+import {v1 as uuid} from "uuid"
+
+//enum nos va a permitir crear parametros opcionales
+// allPersons: [Person]!  //lo cambiamos a :
+// allPersons(city: YesNo): [Person]!
+const typeDefinitios = gql`
+    enum YesNo{
+        YES
+        NO
+    }
+
+    type Address {
+        street: String!
+        city: String!
+    }
+
+    type Person {
+        name: String!
+        address: Address!
+    }
+
+
+    type Query {
+        personCount: Int!
+        allPersons(city: YesNo): [Person]!
+        findPerson(name: String!) : Person
+    }
+
+    type Mutation{
+        addPerson(
+            name:String!
+            street: String!
+            city: String!
+        ):Person
+    }
+`
+// modificamos el resolver de allPersons
+const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: (root: args) => {
+            //si no tenemos un args del city(ya que hicimos opcional el parametro), entonces no estamos filtrando y vamos a devolver todas las persons en un array
+            if(!args.city) return persons;
+
+            const byCity = person => args.city === "YES" ? person.city : !person.city;
+
+            //despues aplicamos un filtro:
+            return persons.filter(byCity)
+
+
+        }
+        findPerson: (root, args) => {
+            const {name} = args
+            return persons.find(person => person.name === name)
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) => {
+            if(persons.find(p => p.name === args.name)){
+                throw new UserInputError("Name must be unique", {invalidArgs: args.name})
+            }
+            const person = {...args/*, id: uuid()*/}
+            persons.push(person) 
+            return person
+        }
+    },
+    Person:{
+        address: (root) => {
+            return {
+                street: root.street,
+                city: root.city
+            }
+        }
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs: typeDefinitios,
+    resolvers: resolvers
+})
+
+
+server.listen().then(({url}) => {console.log(url)})
+```
+
+ahora si hacemos uso del Graphql PlayGround:
+```
+query {
+    allPersons(city: YES){
+        name
+        city
+    }
+}
+```
+
+Con esta query que hacemos nos va a devolver las personas que si tengan el dato de `city` y puedemos estrapolar esto a multiples casos de uso.

@@ -266,3 +266,4 @@ https://www.youtube.com/watch?v=2jxc8DMzt0I
 1:11:00
  para saber si estar en el servirdor o en el cliente:
 typeof window !== "undefined"
+
