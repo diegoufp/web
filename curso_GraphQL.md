@@ -940,3 +940,331 @@ query {
 ```
 
 Con esta query que hacemos nos va a devolver las personas que si tengan el dato de `city` y puedemos estrapolar esto a multiples casos de uso.
+
+## Mutation para editar datos en servidor de GraphQL
+
+```js
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona",
+        street: "calle1"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro",
+        street: "calle2"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza",
+        street: "calle3"
+    }
+]
+```
+```js
+import {UserInputError,ApolloServer,gql} from "apollo-server";
+import {v1 as uuid} from "uuid"
+
+// en mutation vamos a crear otro metodo para editar la ciudad
+
+// EN graphql muchas veces lo que hacemos es que al cambiar un dato lo cambiamos en la base de datos y tambien lo cambiamos en la cache local
+// de esta forma reflejamos el cambio cuando antes sin necesidad de verificar como a ido la base de datos, de esta forma se hace mucho mas rapido
+const typeDefinitios = gql`
+    enum YesNo{
+        YES
+        NO
+    }
+
+    type Address {
+        street: String!
+        city: String!
+    }
+
+    type Person {
+        name: String!
+        address: Address!
+    }
+
+
+    type Query {
+        personCount: Int!
+        allPersons(city: YesNo): [Person]!
+        findPerson(name: String!) : Person
+    }
+
+    type Mutation{
+        addPerson(
+            name:String!
+            street: String!
+            city: String!
+        ):Person
+        editCity(
+            name: String!
+            city: String!
+        ): Person
+    }
+`
+// dentro de las Mutatios de resolver se va agregar el metodo editCity
+const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: (root: args) => {
+         
+            if(!args.city) return persons;
+
+            const byCity = person => args.city === "YES" ? person.city : !person.city;
+
+            return persons.filter(byCity)
+        }
+        findPerson: (root, args) => {
+            const {name} = args
+            return persons.find(person => person.name === name)
+        },
+        editCity: (root,args) =>{
+            const personIndex = persons.findIndex(p => p.name === args.name)
+            if(personIndex === -1)return null
+
+            const person = persons[personIndex]
+            const updatePerson = {...person, city: args.city}
+
+            persons[personIndex] = updatePerson
+
+            //importante al final tenermo que veolver la person que hemos actualizado
+            return updatePerson
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) => {
+            if(persons.find(p => p.name === args.name)){
+                throw new UserInputError("Name must be unique", {invalidArgs: args.name})
+            }
+            const person = {...args/*, id: uuid()*/}
+            persons.push(person) 
+            return person
+        }
+    },
+    Person:{
+        address: (root) => {
+            return {
+                street: root.street,
+                city: root.city
+            }
+        }
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs: typeDefinitios,
+    resolvers: resolvers
+})
+
+
+server.listen().then(({url}) => {console.log(url)})
+```
+
+ahora si hacemos uso del Graphql PlayGround:
+```
+mutation {
+    editCity(name: "Itzi", city:"new city"){
+        name
+    }
+}
+```
+
+## Queries compuestas en graphql
+Se pueden hacer consultas anidadas en una sola query.
+
+Con las funciones que hemos creado hasta ahora, ahora si hacemos uso del Graphql PlayGround:
+
+```
+query {
+    personCount
+    allPersons {
+        name
+    } 
+}
+
+```
+al hacer esta query estamos anidando la informacion de `personCount` y `allPersons` y el `name`, si lo ejecutamos tendremos toda la informacion.
+
+**Pero que pasaria si queremos hacer una query con el mismo metodo mas de una vez?**
+
+
+```
+query {
+    personCount
+    allPersons {
+        name
+    } 
+    allPersons(city: YES){
+        name
+    }
+}
+
+```
+si hacemos esta query sale un error. Esto ocurre por que el campo `allPersons` hay un conflicto en diferentes argumentos, eso quiere decir que, estamos haciando dos veces la misma query dentro de una consulta.
+
+Para solucionar esto podriamos **agregar campo**:
+```
+query {
+    personCount
+    allPersonsData: allPersons {
+        name
+    } 
+    allPersonsWhithCity: allPersons(city: YES){
+        name
+    }
+}
+
+```
+Y si ahora ejecutamos esta query saldra un resultado positivo.
+
+Entonces si se puede hacer una misma consulta con diferentes parametros.
+
+## llamadas a REST API con GraphQL y Json Server    
+primero instalamos `json-server` y axios:
+```
+npm install json-server axios
+```
+
+Y convertirmos los datos a formato json, esto se puede hacer en la consola del navegado ejecutando:
+```
+copy(JSON.stringify([
+    {
+        name: "Midu",
+        city: "Barcelona",
+        street: "calle1"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro",
+        street: "calle2"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza",
+        street: "calle3"
+    }
+]))
+```
+Y el resultado seria:
+
+```json
+{
+    "persons" : [{"name":"Midu","city":"Barcelona","street":"calle1"},{"name":"Youseff","city":"Mataro","street":"calle2"},{"name":"Itzi","city":"Ibiza","street":"calle3"}]
+}
+```
+EStos datos se tiene que poner dentro de un archivo `.json`
+
+Ahora detiamos el archivo `package.json` y dentro de `scripts` agregamos otro comando:
+```
+"scripts": {
+    "json-server": "json-server --watch db.json"
+}
+```
+ahora iniciamos json server.
+
+```js
+import {UserInputError,ApolloServer,gql} from "apollo-server";
+import {v1 as uuid} from "uuid"
+import axios from "axios"
+
+
+const typeDefinitios = gql`
+    enum YesNo{
+        YES
+        NO
+    }
+
+    type Address {
+        street: String!
+        city: String!
+    }
+
+    type Person {
+        name: String!
+        address: Address!
+    }
+
+
+    type Query {
+        personCount: Int!
+        allPersons(city: YesNo): [Person]!
+        findPerson(name: String!) : Person
+    }
+
+    type Mutation{
+        addPerson(
+            name:String!
+            street: String!
+            city: String!
+        ):Person
+        editCity(
+            name: String!
+            city: String!
+        ): Person
+    }
+`
+
+//para hacer llamadas a APIs lo primero sera hacer asincorna la funcion de allPersons
+const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: async (root: args) => {
+            const {data :personsFromApi} = await axios.get("https://localhost:3000/persons")
+
+            if(!args.city) return personsFromApi;
+
+            const byCity = person => args.city === "YES" ? person.city : !person.city;
+
+            return personsFromApi.filter(byCity)
+        }
+        findPerson: (root, args) => {
+            const {name} = args
+            return persons.find(person => person.name === name)
+        },
+        editCity: (root,args) =>{
+            const personIndex = persons.findIndex(p => p.name === args.name)
+            if(personIndex === -1)return null
+
+            const person = persons[personIndex]
+            const updatePerson = {...person, city: args.city}
+
+            persons[personIndex] = updatePerson
+
+            return updatePerson
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) => {
+            if(persons.find(p => p.name === args.name)){
+                throw new UserInputError("Name must be unique", {invalidArgs: args.name})
+            }
+            const person = {...args/*, id: uuid()*/}
+            persons.push(person) 
+            return person
+        }
+    },
+    Person:{
+        address: (root) => {
+            return {
+                street: root.street,
+                city: root.city
+            }
+        }
+    }
+}
+
+const server = new ApolloServer({
+    typeDefs: typeDefinitios,
+    resolvers: resolvers
+})
+
+
+server.listen().then(({url}) => {console.log(url)})
+```
+
+## GRAPHQL + REACT + APOLLO CLIENT
+
+Se vera la mejor forma de utilizar un cliente de graphql
