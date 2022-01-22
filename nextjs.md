@@ -235,6 +235,8 @@ return {
 }
 ```
 
+
+
 ### agregar datos de lanzamiento de SpaceX a la página
 
 Tenemos nuestros datos de lanzamiento que pudimos usar Apollo Client para solicitar del servidor SpaceX GraphQL. Hicimos esa solicitud `getStaticProps` para que pudiéramos hacer que nuestros datos estén disponibles como el `launches` accesorio que contiene nuestros datos de lanzamiento.
@@ -261,9 +263,205 @@ Desde aquí, podemos incluir cualquier dato adicional desde el interior de nuest
 
 Incluso puede agregar datos adicionales a la consulta de GraphQL. Cada lanzamiento tiene mucha información disponible, incluido el equipo de lanzamiento y más detalles sobre el cohete.
 
-https://www.youtube.com/watch?v=2jxc8DMzt0I
 
-1:11:00
  para saber si estar en el servirdor o en el cliente:
 typeof window !== "undefined"
 
+https://www.youtube.com/watch?v=2jxc8DMzt0I
+
+1:11:00
+## NEXTJS + MONGOB
+
+Mongodb nos da un modulo para node para poder conectarlo pero en esta ocacion vamos a usar un modulo especial de mongodb llamado [mongoose](https://mongoosejs.com/),que es basicammente un modulo que nos permite conectarnos a la base de datos y tambien a su vez modelar los datos, es decir, decirle a mongodb que es lo que vamos a estar guardando dentro de la base de datos.
+
+
+Despues abriremos el archivo `pages/api/hello.ts/`
+
+SI queremos abrir este archivo desde el navegador entonces encendemos el servidor e ingresamos a la ruta:
+```
+localhost:3000/api/hello
+```
+ESto va a mostrar un objeto `.json`, es un objeto por que por lo general el backend devuelve objetos `.json` como forma de dar datos al cliente.
+
+Next por debajo usar `express`.
+
+Ahora crearemos un nueva nueva carpeta `pages/api/tasks/`, esta carpeta `tasks` nos va a servir para crear un CRUD  de tareas, es decir, vamos a crear los endpoinds o urls basicos que nos van a permitir crear tareas en el backend, eliminar, actualizar y obtener una unica tarea.
+
+Ahora vamos a crear un archivo  `pages/api/tasks/index.js` y dentro de el vamos a escribir:
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+
+type Data = {
+  name: string
+}
+
+export default function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Data>
+) {
+  res.status(200).json("tasks")
+}
+
+
+```
+
+SI queremos abrir este archivo desde el navegador e ingresamos a la ruta:
+```
+localhost:3000/api/tasks
+```
+nos aparecera el string `tasks`
+
+ahora vamos a instalara `mongoose`:
+```
+npm i mongoose
+```
+
+y vamos a crear un nuevo archivo al mismo nivel que `packagejson`, este archivo se va a nombrar `.env`, dentro de esta archivo vamos a escribir la direccion de la base de datos de mongodb(como variable de entorno)
+```
+MONGO_URL= mongodb://localhost:27017/nextjsmongodb
+``` 
+nuestra base de datos, en esta ocacion, se va a llamar `nextjsmongodb`.
+Nosotros no tenemos que crear esta base de datos, en mongodb cuando nos conectamos a una base de datos este lo crea por nosotros.
+
+Ahora si vemos el `.gitignore` se puede observar que esta ignorando:
+```js
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+```
+y vamos a agregar el `.env` para que no se suba a github:
+```js
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+```
+
+En lugar de un string lo que queremos devolver es una lista de tareas pero esas tareas tienen que estar guardadas en algun lugar y para eso necesito una base de datos.
+
+Para conectarnos a una base de datos nosotros podemos crear una carpeta al mismo nivel que la carpeta `pages` **no** dentro de esta misma. En esta ocacion vamos a crear una carpeta con el nombre `utils` en esta carpeta podemos crear un archivo de conexion, es decir, un archivo que va a tener la conexion de la base de datos `utils/mongoose.ts`
+
+`mongoose.ts`:
+```ts
+import {connect,connection} from "mongoose";
+// connection da una serie de eventos para detectar cuando la coneccion se haya hecho, si ocurrio un error o si paso algo
+
+export async function dbConect(){
+    //dbConect lo que haces es inicialmente va intentar concetarse con la base de datos
+    //pero para hacerlo tenermos que especificar a que base de datos se va a tener que concectar 
+    // por lo general es comun que se le pase una direccion url de mongo db
+    //pero a la hora de despegar la aplicacion no se va a querer colocar la direccion de la base de datos directamente en codigo asi que vamos a usar una variable de entorno del archivo .env
+    const db: any = await connect(process.env.MONGO_URL)
+    // lo anterior va a devolver un objeto db y si este existe va a devolver un estado
+    //.readyState: para mostrar el estado, si esta listo o no
+    console.log(db.connections[0].readyState)
+
+}
+
+connection.on("connected", ()=>{
+    console.log("Mongodb is connected")
+})
+
+connection.on("error", (err)=>{
+    console.log(err)
+})
+```
+
+ahora en el archivo de `pages/api/tasks/index.ts` vamos a importar `mongoose.ts`:
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+import {dbConect}  from "../../../utils/mongoose"
+type Data = {
+  name: string
+}
+
+dbConect()
+
+export default function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Data>
+) {
+  res.status(200).json({ name: 'tasks' })
+}
+
+
+```
+
+
+Ahora tenemos que iniciar la base de datos de mongo:
+```
+mongod
+```
+
+si ocurero un error es por que `node` v17 prefiere las direcciones IPv6 a las IPv4. Pero mongo está configurado de manera predeterminada con ipv4.
+
+- Configuración de IPv4
+```
+net:
+  port: 27017
+  bindIp: 127.0.0.1
+```
+- Configuración de IPv6
+```
+ net:
+      ipv6: true
+      port: 27017
+      bindIpAll: true
+```
+
+en las rutas:
+OSX path : `/usr/local/etc/mongod.conf`
+Ubuntu Path: `/etc/mongod.conf`
+
+Luego reinicie mongo.
+```
+sudo systemctl restart mongod
+```
+
+Algo que ocurre en nextjs es que cada vez que que estemos creando rutas para nuestro backend vamos a tener que estar importando la conexion a la base de datos, pero si importams el `dbConect` cada vez se va a crear una conexion nueva, para arreglar esto tenemos que guardar la conexion y poner una condicional, si ya existe la conexion vamos a utilizarla
+
+```ts
+import {connect,connection} from "mongoose";
+
+const conn = {
+    isConnected: false
+  }
+  
+
+export async function dbConect(){
+
+    //creamos una condiconal para usar la coneccion ya existente a la base de datos y asi no se creen nuevas con cada import a otros archivos
+    if(conn.isConnected) return;
+   
+    const db: any = await connect(`${process.env.MONGO_URL}`);
+
+    conn.isConnected = db.connections[0].readyState;
+
+    console.log(db.connection.db.databaseName)
+
+}
+
+connection.on("connected", ()=>{
+    console.log("Mongodb is connected")
+})
+
+connection.on("error", (err)=>{
+    console.log(err)
+})
+```
+
+### consultas mongodb en nexjs
+
+Para hacer una consulta desde nexjs a mongodb tenemos que crear primero una carpeta con un archivo `models/task.ts` al mismo nivel que `pages` **no** dentro de esta misma.
+
+Esta carpeta `models` va a contener un modelo de datos de lo que la base de datos tiene. Desntro del archivo `task.ts` escribimos:
+
+```ts
+
+```
+
+https://www.youtube.com/watch?v=SiUM8vYeuu0
+
+23:48
