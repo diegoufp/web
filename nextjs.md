@@ -459,7 +459,33 @@ Para hacer una consulta desde nexjs a mongodb tenemos que crear primero una carp
 Esta carpeta `models` va a contener un modelo de datos de lo que la base de datos tiene. Desntro del archivo `task.ts` escribimos:
 
 ```ts
+import { Schema,model,models } from "mongoose";
+// Schema: nos va apermitir definir los parametros y datos queremos guardar
+// model: nos permite crear el modelo
+// models: nos va a permitir saber cuantos modelos tenemos creados en nuestra conexion
 
+// le indicamos que queremos que las tareas tengan las propiedades:
+// [true, "Title is required"] : en caso de que no se mande el titulo se va a imprimir el string
+// trim : true: va aquitar los espacios del final y del inicio del title
+
+//timestamps: true : adicionalmente al titulo yd escription le va agregar dos campos mas (la fehca de cuando se creo y la fecha de cuando se actualizo)
+new Schema({
+    title:{
+        type:String,
+        required: [true, "Title is required"],
+        unique: true,
+        trim : true,
+        maxlength: [40, "Title must be less than 40 characters"]
+    },
+    description:{
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: [200, "Title must be less than 200 characters"]
+    }
+},{
+    timestamps: true
+})
 ```
 
 https://www.youtube.com/watch?v=SiUM8vYeuu0
