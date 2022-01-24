@@ -469,7 +469,7 @@ import { Schema,model,models } from "mongoose";
 // trim : true: va aquitar los espacios del final y del inicio del title
 
 //timestamps: true : adicionalmente al titulo yd escription le va agregar dos campos mas (la fehca de cuando se creo y la fecha de cuando se actualizo)
-new Schema({
+const taskSchema = new Schema({
     title:{
         type:String,
         required: [true, "Title is required"],
@@ -484,10 +484,326 @@ new Schema({
         maxlength: [200, "Title must be less than 200 characters"]
     }
 },{
-    timestamps: true
+    timestamps: true,
+    versionKey : false
 })
+
+//ahora lo importaremos como un modelo
+//model recibe dos parametros, un nombre y el Schema
+// crearemos una condicional 
+// si el model ya ha sido creado usaremos dicho modelo existente y no lo volveremos a crear
+export default models.Task || model("Task", taskSchema)
+```
+ Ahora que tenemos un modelo lo tener que importarlo en `pages/api/tasks/inde.ts`:
+
+ ```ts
+ import type { NextApiRequest, NextApiResponse } from 'next'
+import {dbConect}  from "../../../utils/mongoose";
+import Task from "../../../models/task";
+// este modelo Task ya nos permite hacer consultas a la base de datos
+
+type Data = {
+  name: string
+}
+
+dbConect()
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<Data>
+) {
+  //ahora haremos una consula con el modelo Task
+  //Task tiene un metodo llamado find(), este metodo find es asincrono 
+  const tasks = await Task.find();
+  console.log(tasks)
+  res.status(200).json(tasks)
+}
+```
+
+Esto nos tendria que devolver un array en blanco `[]`, por consola, por que no tenemos datos en la base de datos aun. `http://localhost:3000/api/tasks`
+
+#### [Absolute Imports and Module path aliases](https://nextjs.org/docs/advanced-features/module-path-aliases)
+
+Para evitar tipear rutas largas en los imports podemos usar la opcion `"baseUrl": "."` en el archivo `tsconfig.json or jsconfig.json`
+```js
+// tsconfig.json or jsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": "src"
+  }
+}
+```
+Lo que tenemos gracias a esto es que ahora la base de las rutas de nuestro proyecto es la carpeta `src` la cual es la carpeta que usamos para todo el codigo de nuestro proyecto.
+
+SI llega a ocurrir un error hay que eliminar la carpeta `.next` y volver a ejecturar `npm run dev`
+
+### Validacion de peticiones
+
+**GET**
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+import {dbConect}  from "utils/mongoose";
+import Task from "models/task";
+
+
+/*type Data = {
+  name: string
+}
+*/
+dbConect()
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  //para validar las peticiones crearemos condicionales
+  //cuando tenemos una peticion el objeto `req` nos da informacion de la peticion que se esta haciendo 
+  // req.query //da informacion de la query (lo que viene en una consulta)
+  // req.url //da informacion de la url que esta llegando ejemplo: /api/pasks
+  // req.method  Ejemplo: get
+  switch (req.method) {
+    case "GET":
+      const tasks:any = await Task.find();
+      return res.status(200).json(tasks);
+    default:
+      return res.status(400).json({msg:"this method is not supported"});
+  }
+}
+```
+**POST**
+
+Apartir de aqui ya necesitamos un cliente `rest` por que vamos a hacer otro tipo de peticiones. Un cliente `rest` me permite hacer las otras peticiones POST,PUT,DELETE. Un cliente rest que funciona dentro de VisualStudioCode de llama `thunder client` para hacer peticiones estilo postman dentro de la aplicacion . Otra opciones eria el `REST Client` tambien de VisualStudioCode el cual nos permite consultar desde un archivo, en esta ocacion usaremos `thunder client`.
+
+En `thunder client` cuando hacemos click al boton `New Request` nos dan varias opciones. En el apartado de `Body` podremos poner un contenido en diferentes formatos para que el servidor lo resiva y pueda ver con `req.body`:
+
+```json
+//Json Content
+{
+  "title": "my first task", 
+  "description": "this is my first description"
+}
+```
+
+y modificamos el `index.ts` para que acepte peticiones "POST":
+```TS
+import type { NextApiRequest, NextApiResponse } from 'next'
+import {dbConect}  from "utils/mongoose";
+import Task from "models/task";
+
+
+/*type Data = {
+  name: string
+}
+*/
+dbConect()
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const {method, body} = req;
+
+  switch (req.method) {
+    case "GET":
+      try {
+        const tasks:any = await Task.find();
+        return res.status(200).json(tasks);
+      } catch (error) {
+        return res.status(400).json({error: error.message})
+      }
+      
+    case "POST":
+      try {
+        
+      //el metodo POST lo que va hacer primero es recibir las datos que le envie el cliente atravez de:
+      //req.body
+      // este seria el objeto que esta creado mongoose
+      const newTask = new Task(body); //esto solo crea un objeto nuevo
+      // luego lo vamos a guardar en la base de datos
+      const savedTask = await newTask.save();
+      // y finalmente lo retornamos
+      return res.status(201).json(savedTask)
+      } catch (error) {
+        return res.status(400).json({error:error.message})
+      }
+
+
+    default:
+      return res.status(400).json({msg:"this method is not supported"});
+  }
+}
+
+
+```
+
+Y en `thunder client` hacemos una peticion POST al link `http://localhost:3000/api/tasks` y la respuesta del backend es:
+```json
+{
+  "title": "my first task",
+  "description": "this is my first description",
+  "_id": "61edff4f7f386c312acfd6da",
+  "createdAt": "2022-01-24T01:22:23.291Z",
+  "updatedAt": "2022-01-24T01:22:23.291Z"
+}
+```
+
+Ahora vamos a crear las indicacion para obtener una sola tarea, eliminar una sola tarea y actualizar una tarea, para hacer esto tener que enviarle un id de la tarea que ya existe".
+
+Tener que crear un archivo dentro de `pages/api/task/` con el nombre de `[id].ts` entre nombre entre llaves significa que lo que esta dentro de los braquets es para que se considere como un parametro, es decir, eso va a ir cambiando, esto lo hacemos por que no sabes que id va a ser.
+
+`[id].ts`: 
+```ts
+export default async (req,res) => {
+    //en esta ocacion queremos ver el parametro 
+    // para ver los datos de la consulta : req.query
+    console.log(req.query)
+    return res.status(200).json("reiceved")
+};
+```
+
+Ahora si en el navegador visitamos la url `http://localhost:3000/api/tasks` podremos ver el mensaje de `received` y en la consola `{id:100}`
+
+**GET ONE**.
+Obtendremos una tarea con un id
+```TS
+import type { NextApiRequest, NextApiResponse } from 'next';
+import {dbConect}  from "utils/mongoose";
+import Task from "models/task";
+
+dbConect();
+
+export default async function requestId(req: NextApiRequest,
+    res: NextApiResponse) {
+    const {method,body,query:{id}} = req;
+
+    switch(method){
+        case "GET":
+            try {
+              //findById : permite buscar por id
+                const task = await Task.findById(id);
+                if(!task) return res.status(404).json({msg:"Task not found"});
+            return res.status(200).json(task)
+            } catch (error) {
+                return res.status(500).json({msg:error.message})
+            }
+
+            
+        case "PUT":
+
+        case "DELETE":
+
+        default:
+            return res.status(400).json({msg:"this method is not supported"});
+    }
+};
+```
+Ahora si en el navegador visitamos la url `http://localhost:3000/api/61edff4f7f386c312acfd6da` podremos ver el mensaje que nos devuelve la tarea con dicho id.
+
+**DELETE ONE**
+```TS
+import type { NextApiRequest, NextApiResponse } from 'next';
+import {dbConect}  from "utils/mongoose";
+import Task from "models/task";
+
+dbConect();
+
+export default async function requestId(req: NextApiRequest,
+    res: NextApiResponse) {
+    const {method,body,query:{id}} = req;
+
+    switch(method){
+        case "GET":
+            try {
+                const task = await Task.findById(id);
+                if(!task) return res.status(404).json({msg:"Task not found"});
+                return res.status(200).json(task)
+            } catch (error) {
+                return res.status(500).json({msg:error.message})
+            }            
+        case "PUT":
+
+        case "DELETE":
+            try {
+                //findByIdAndDelete : permite eleminar una tarea con un id
+                const deletedTask = await Task.findByIdAndDelete(id);
+                // mongoose cuando elimina un dato se lo devulve 
+                if(!deletedTask) res.status(404).json({msg: "Task not found"});
+                return res.status(200).json(deletedTask);
+                // otra foorma de return seria:
+                // todo salio bien pero no regresa nada:
+                // return res.status(204);
+            } catch (error) {
+                return res.status(400).json({msg:error.message})
+            }
+
+        default:
+            return res.status(400).json({msg:"this method is not supported"});
+    }
+};
+```
+Ahora si usamos ``THINDER CLIENT` y hacemos una peticion `DELETE` a la url `http://localhost:3000/api/61edff4f7f386c312acfd6da` podremos ver como se elimina dicha tarea y de respuesta obtendremos la tarea eliminada.
+
+**PUT ONE**
+```ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import {dbConect}  from "utils/mongoose";
+import Task from "models/task";
+
+dbConect();
+
+export default async function requestId(req: NextApiRequest,
+    res: NextApiResponse) {
+    const {method,body,query:{id}} = req;
+
+    switch(method){
+        case "GET":
+            try {
+                const task = await Task.findById(id);
+                if(!task) return res.status(404).json({msg:"Task not found"});
+                return res.status(200).json(task)
+            } catch (error) {
+                return res.status(500).json({msg:error.message})
+            }            
+        case "PUT":
+            try {
+                // el id es la tarea que quiere ser actualizada 
+                // el body son los nuevos datos
+                // al actualizarse un objeto este retorna el objeto antiguo
+                // por esta razon se le pasa al la funcion findByIdAndUpdate el objeto new: true
+                // para que asi retorne el objeto nuevo y no el objeto antiguo
+                const taskUpdate = await Task.findByIdAndUpdate(id, body,{new : true});
+                
+                if(!taskUpdate) return res.status(400).json({msg:"Task not found"});
+                return res.status(200).json(taskUpdate)
+            } catch (error) {
+                return res.status(500).json({msg:error.message})
+            }
+        case "DELETE":
+            try {
+                
+                const deletedTask = await Task.findByIdAndDelete(id);
+                
+                if(!deletedTask) res.status(404).json({msg: "Task not found"});
+                return res.status(200).json(deletedTask);
+            } catch (error) {
+                return res.status(400).json({msg:error.message})
+            }
+
+        default:
+            return res.status(400).json({msg:"this method is not supported"});
+    }
+};
+```
+
+Ahora si usamos ``THINDER CLIENT` y hacemos una peticion `PUT` a la url `http://localhost:3000/api/61edff4f7f386c312acfd6da` y luego en la opcion de `Body` tenemos que ingresar los datos que queremos actualizar:
+```json
+//Json Content
+{
+  title: "titulo actualizado",
+  description : "descripcion actualizada"
+}
 ```
 
 https://www.youtube.com/watch?v=SiUM8vYeuu0
 
-23:48
+1:00:00
