@@ -911,6 +911,7 @@ import styles from '../styles/Home.module.css';
 
 
 const Home: NextPage = ({tasks}) => {
+  // con map podemos recorrer el objeto tasks
   console.log(tasks)
   return (
     <div className={styles.container}>
@@ -934,6 +935,102 @@ export const getServerSideProps = async()=>{
 ```
 Esto mostraria las tareas en la consola del navegador y mostraria mas detalladamente como pasan los datos de backen a frontend
 
-https://www.youtube.com/watch?v=SiUM8vYeuu0
+## nav para todas las paginas
 
-1:00:00
+Todas las paginas pasan por `src/pages/_app.tsx` asi podriamos poner un componente en dicho archivo para que se muestre es los demas componentes.
+
+crearemos una carpeta `src/components/Layout.tsx`, este `Layout.ts` nos va a pemitir el colocar una estrucura en comun, es decir, crear una navegacion para todas las paginas, un footer para todas la paginas, etc.
+
+y tambien crearemos un archivo `src/components/Navbar.tsx`:
+```tsx
+
+import Link from "next/link";
+import { useRouter } from "next/router";
+//useRouter nos permite movernos entre paginas con una function
+//Link es como un a de html pero esto no recarga la pagina para cambiar de pesta;as
+
+const Navbar = () => {
+
+    const router = useRouter();
+
+  return (<header>
+      <div>
+          {/*EL favicon y el vercel se encuentran en la carpeta bublic */}
+          {/*Si en el navgeador buscamos: localhost:300/favicon.ico */}
+          {/*SI buscamos eso nos mostrara el favicon.ico entonces nosotros podemos hacer referencia a el no desde las carpetas sino desde la direccion de las pesta;as, lo mismo con el vercel.svg */}
+          <img src="/vercel.svg" alt="ico"/>
+        </div>
+      <nav>
+          <ul>
+              <li>
+                  {/*Este boton nos regresara el home sin que se refresque la pagina */}
+                  {/*Tambien le podemos poner etiquetas img dentro para que al momento de datle click a una imagen esta nos refireccione a otra page */}
+                  <Link href="/">Home</Link>
+              </li>
+              <li>
+                  <input type="button" onClick={()=> router.push("/task/new")}>new</input>
+              </li>
+          </ul>
+      </nav>
+  </header>);
+};
+
+export default Navbar;
+
+
+```
+
+y dentro de `Layout.tsx`:
+
+```tsx
+import Navbar from "./Navbar";
+
+
+const Layout = ({children}) => {
+  return( 
+    <>
+    <Navbar/>
+    {children}
+    </>);
+};
+
+export default Layout;
+
+```
+
+Ahora para que se vea en todas la paginas es escribir en `src/pages/_app.tsx`:
+
+```tsx
+import '../styles/globals.css'
+import type { AppProps } from 'next/app'
+import Layout from 'components/Layout'
+
+
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <Layout>
+      <Component {...pageProps} />
+    </Layout>
+  )
+  
+}
+
+export default MyApp
+
+```
+
+### next/error
+
+Nextjs nos da una pagina para nuestros errores:
+
+```tsx
+import Error from "next/error"
+//nos da un componente en el cual podemos pasarle un titulo y un texto por pantalla
+export default function task (){
+  return(
+    <Error statusCode={404} title="This is not the web page you are looking for"/>
+    
+  )
+} 
+```
