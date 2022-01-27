@@ -1034,3 +1034,128 @@ export default function task (){
   )
 } 
 ```
+#### next/imge
+
+## NextJS + GraphQL
+
+Instalamos las dependencias
+```
+npm @apollo/client graphql
+```
+
+en `pages/index.j`:
+```js
+import {useState} from "react";
+import {ApolloClient, InMemoryCache, gql} from "@apollo/client"
+
+export default function Home(results){
+  const initialState = results;
+  const [characters,setCharacters] = useState(initialState.characters)
+}
+
+export async funcion getStaticProps(){
+  const client new ApolloClient({
+    uri: "https//rickandmortyapi.com/graphql",
+    cache: new InMemoryCache(),
+  });
+  const {data} = await client.query({
+    query: gql`
+      query {
+        characters(page:1){
+          info{
+            count
+          }
+        }
+      }
+    `
+  });
+  return {
+    props:{
+      characters: data.characters.info
+    }
+  }
+}
+```
+
+## apollo-server-micro + nextjs
+
+Intalaremos Apollo Server Micro por que esta optimizada para entornos sin servidor y Next.js
+```
+npm install apollo-server-micro graphql micro-cors
+```
+
+En la carpeta raiz se creara un carpeta llamda `grapql`, esta carpeta tendra todo lo relacionado con nuestra API de GraphQL. Dentro de esta carpeta se creara un nuevo archivo llamado `schema.ts`, en este archivo definiremos el esquema graphql para la aplicacion:
+```ts
+import {gql} from "apollo-server-micro";
+export const typeDefs = gql`
+  type Link{
+    id: String
+  }
+  type Query{
+    links: [Links]!
+  }
+`
+```
+
+Ahora crearemos el documento de los resolvers en la misma carpeta y lo llamaremos `resolvers.ts`:
+```ts
+export const resolvers = {
+  Query: {
+    links: () => [
+      {id: "asfsdfssa-asfsf-156465-asdas"}
+    ]
+  }
+}
+```
+
+Ahora el siguiente paso es conbian el `schema` con los `resolvers` y ahi es donde entra en juego Apollo Server.
+
+Nextjs es un marco de trabajo de pila completa y tiene una caracteristica realmente genial y son las rutas API.
+
+Dentro de la carpeta `pages` se encuentra la carpeta `api`, dentro de la carpte `api` crearemos el archivo `graphql.ts`:
+
+```ts
+import {ApolloServer} from "apollo-server-micro";
+import {typeDefs} from "../../graphql/schema";
+import {resolvers} from "../../graphql/resolvers";
+import Cors from "micro-cors";
+
+const cors = Cors()
+
+const apolloServer = new ApolloServer({typeDefs, resolvers});
+
+
+//tambien queremos definir una function para iniciar el servidor, este es un requisito para apollo server
+// debe tener una funcion que inicie el servidor antes de crear el punto final
+const startSever = apolloSever.start()
+
+//ahora mismo NextJS aun no esta al tanto de este punto final, EN realiadm necesitamos hacer una exportacion predeterminada 
+export default cors(
+  
+  async function headler(req,res){
+
+    if(req.method === "OPTIONS"){
+      res.end()
+      return false;
+    }
+    await startServer;
+  
+    //path: especificaremos la rua de nuestro servidor graphql
+    await apolloServer.createHandler({
+      path: "api/graphql"
+    })(req,res);
+  }
+) 
+
+//lo utimo que haremos es en realidad este analisis de cuerpo capacitado
+//eso es por que se maneja de forma predeterminada en graphql 
+// para esto tendremos que especificarle a nextjs:
+export const config = {
+  api:{
+    bodyParser:false
+  }
+}
+```
+
+Con esto ya tendriamos creado un servidor de GrahQl
+
