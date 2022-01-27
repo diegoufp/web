@@ -1267,4 +1267,113 @@ server.listen().then(({url}) => {console.log(url)})
 
 ## GRAPHQL + REACT + APOLLO CLIENT
 
-Se vera la mejor forma de utilizar un cliente de graphql
+Se vera la mejor forma de utilizar un cliente de graphql.
+
+Se vera como conectar el servido con un cliente de apollo.
+
+si iniciamos el servidor de apollo, vamos a tener el graphql playground.     
+
+Pero tambien es importante saber que cuando tenemos un servidor de graphql lo podemos utilizar de cualquier forma, es decir, que no necesitamos una tecnologia en concreto para poder extraer datos de nuestro servidor de graphql.
+
+Para demostrar lo anterior usaremos una extencion de Visual Studio Code llamda `THUNDER CLIENT`  y haremos un request al graphql server para extraer la informamcion de una forma sensilla, sin ningun cliente.
+
+Realizaremos una solicitud `POST` por que graphql solo acepta `POST` y solo tiene un solo endpoint desde el que se hacen todas y cada una de las querys `localhost:4000/` y en la opcion de `Body` de tipo `Json`:
+```json
+//Json Content
+{
+    "query": "query {allPersons{name}}"
+}
+```
+
+Y enviaamos la request, podemos observar que solo con esto ya podriamos utilizar nuestro servidor de graphql, pero realizar peticiones de esta manera perdemos unas cuantas ventajas.
+
+Necesitaremos crear un proyecto con react con `create react app` e iniciamos el servidor de react.
+
+Lo primero que podriamos hacer para conectar nuestro graphql server es:
+```jsx
+import react, {useEffect} from "react";
+
+function App(){
+    useEffect(()=>{
+        //hacemos un fetch al graphql server
+        fetch("http://localhost:4000",{
+            method: "POST",
+            headers:{"Content-Type":"application/json"}, body: JSON.stringify({query:`
+                query{
+                    allPersons {
+                        name
+                    }
+                }
+            `}).then(res => res.json()).then(res => {
+                //siempre graphql nos devuelve la informacion en data 
+                console.log(res.data)
+            })
+        })
+    })
+    return (
+        <div>
+        </div>
+    )
+}
+```
+
+Esto nos moestraria la informacion en el console del navegador. Con esto se quiere demostrar que cualquier quiente que se vaya a utilizar, de forma ultima, lo que hace es muy similar a un peticion con fetch como anterior mente se hizo. Sin embargo de esta forma se pierden alguna vetajas.
+
+Hasta este punto funciona las peticiones hacia el servidor de graphql, no da la respuesta y esta respuesta la podemos guardar en el state, pero este trabajo seria muy manual, tendriamos que estar constantemente guardando la informacion en el estado y para saber cuando esta cargando tendriamos que poner una funcion para saber cuando esta cargando, sin embargo esto ya nos lo da un cliente de apollo, lo mismo para el control de errores.
+
+**tipo de clientes**
+Existen diferentes clientes que tienen muchas ventajas a la hora de trabajar con graphql en especifico:
+
+- [relay.dev](https://relay.dev/): es el cliente de graphql que esta utilizando facebook(De forma oficial) en sus productos y esta bien para productos grandes.
+- [apollo client](https://www.apollographql.com/docs/react/): lo que ofrece es:
+    - puedes ver cada una d elas peticiones, la cache, lo que tiene.
+    - te permite implementarlo en tu aplicacion de forma incremental.
+    - no hace falta que el servidor de graphql este hecho con apollo, funciona con cualquier servidor de graphql.
+
+Instalaremos apollo client:
+```
+npm install @apollo/client graphql
+```
+
+importamos el apollo cliente a componente principal de la aplicacion:
+```js
+import React from "react";
+import ReactDom from "react-dom";
+import {ApolloCiente,ApolloProvider,InMemoryCache,HttpLink,gql} from "@apollo/client";
+
+//iniciamos el cliente
+//una de las cosas importantes que tiene el cliente de apollo es la cache
+//una cache que cada vez que hace una peticion guarda la informacion para evitar hacer mas de una vez esa peticion y tambien sincronizar los cambios que se esten haciando en esa cache   
+// y asi poderlo guardar ahi sin necesidad de volver a pedirlos al servidor 
+// podriamos tener diferentes caches 
+// cada vez que cerremos el servidor y lo volvamos a levantar se pierde la cache, asi que podria haber cache de base de datos, en disco, etc.
+const client = new ApolloClient({
+    cache: new InMemoryCache(),
+    link: new HttpLink({
+        url: "http://localhost:400"
+    })
+})
+//las opciones de apolo son:
+//- link: con que nos queremos conectar
+//- cache : las mas tipica que se puede utilizar es en memoria
+
+//para hacer una peticion: 
+const query = gql`
+    query{
+        allPersons{
+            name
+        }
+    }
+`
+client.query({ query: query}).then(res => {
+    console.log(res.data)
+})
+
+//el provider permite envolver la aplicacion
+// utiliza el context para que el cliente este disponible en todos los componentes que estamos envolviendo
+RecarDOM.rendes(
+    <ApolloProvider client={client}>
+        <App/>
+    </ApolloProvider>
+,document.getElementById("root"))
+```
