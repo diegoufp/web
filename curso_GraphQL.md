@@ -1339,7 +1339,7 @@ importamos el apollo cliente a componente principal de la aplicacion:
 ```js
 import React from "react";
 import ReactDom from "react-dom";
-import {ApolloCiente,ApolloProvider,InMemoryCache,HttpLink,gql} from "@apollo/client";
+import {ApolloClient,ApolloProvider,InMemoryCache,HttpLink,gql} from "@apollo/client";
 
 //iniciamos el cliente
 //una de las cosas importantes que tiene el cliente de apollo es la cache
@@ -1350,7 +1350,7 @@ import {ApolloCiente,ApolloProvider,InMemoryCache,HttpLink,gql} from "@apollo/cl
 const client = new ApolloClient({
     cache: new InMemoryCache(),
     link: new HttpLink({
-        url: "http://localhost:400"
+        uri: "http://localhost:400"
     })
 })
 //las opciones de apolo son:
