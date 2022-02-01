@@ -109,6 +109,37 @@ Las API de Next.js gustan `getStaticProps` y `getServerSideProps` le permiten re
 
 Al usar uno de esos métodos, podemos solicitar datos junto con nuestras páginas e inyectar esos datos como accesorios directamente en nuestra aplicación.
 
+
+#### getInitialProps
+
+```tsx
+export const componente = ({userName}) => {
+  return(
+    <div>
+    <h1>{userName}</h1>
+    </div>
+  )
+}
+
+//a un componente se le puede agregar un metodo especial llamado getInitialProps
+// esto no es de react, esto es exclusivo de nextjs
+// lo que hace nextjs es que a los componente que son de tipo pagina se le agrega este metodo especial
+// solo pueden ser usadas en componentes tipo pagina, no es subcomponentes
+// este es el mas clasico, hay otros dos nuevos 
+// este nos ofrece una forma de que en el servidor podamos agregarle las props que tiene que utilizar el componente 
+// lo que nos va a permitir es hacer un fetching de datos y estos datos se los pudemos pasar como props al componente
+componente.getInitialProps = async () =>{
+  //este metodo se esta ejecutando en el servidor
+  return fetch("hyyp://localhost:3000/api/hello")
+  .then(res => res.json)
+  /*.then(response => {
+    const {userName} = response
+    return {userName}
+  })
+  */
+}
+```
+
 ## Next.js + Apollo + GraphQL 
 
 Para comenzar a realizar una consulta GraphQL, necesitaremos un cliente GraphQL. Usaremos el cliente Apollo GraphQL.
