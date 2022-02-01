@@ -1457,7 +1457,7 @@ export default Home;
 ```
 
 ### usar parametros para las queries
-```stx
+```tsx
 import type { NextPage } from 'next'
 import Head from 'next/head'
 import Image from 'next/image'
@@ -1532,4 +1532,161 @@ const Home: NextPage = () => {
 
 
 export default Home;
+```
+### Apollo Client Developer Tools
+Existe una extencion de llama [Apollo Client Devtools](https://chrome.google.com/webstore/detail/apollo-client-devtools/jdkknkkbebbapilgoeccciglkfbmbnfm) y podemos conectarlo a nuestro cliente:
+
+```tsx
+import '../styles/globals.css'
+import type { AppProps } from 'next/app';
+import {ApolloClient,ApolloProvider,InMemoryCache,HttpLink,gql} from "@apollo/client";
+
+//se le agrega la propiedad de onnectToDevTools
+const client = new ApolloClient({
+  connectToDevTools: true,
+  cache: new InMemoryCache(),
+  link: new HttpLink({
+      uri: "http://localhost:3000/api/graphql"
+  })
+})
+
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return (
+    <ApolloProvider client={client}>
+      <Component {...pageProps} />
+    </ApolloProvider>
+  )
+}
+
+export default MyApp
+
+```
+
+En esta se pueden ver las querys, mutaciones y la cache
+
+### Mutaciones
+```tsx
+import { gql, useMutation } from "@apollo/client"
+import { useState } from "react";
+
+
+
+const CREATE_PERSON =  gql`
+mutation createPerson($name: String!, $city: String!){
+    addPerson(
+        name: $name
+        city: $city
+        ){
+            name
+            city
+        }
+}
+`
+
+export const PersonForm = () => {
+    const [name,setName] = useState("");
+    const [city,setCity] = useState("");
+    // el useMutation es similar al useLazyQuery, se le tiene que inicar cuando ocurrira el evento
+    
+    const [createPerson] = useMutation(CREATE_PERSON)
+
+
+    const handleSubmit = e => {
+        e.preventDefault()
+        /*Tenemos quie asignarle las variables:
+        name: $name
+        city: $city
+        */
+        createPerson({variables:{name, city}})
+
+        setName("");
+        setCity("");
+    }
+    return(
+        <div>
+            <h2>Create new Person</h2>
+            <form onSubmit={handleSubmit}>
+                <input placeholder="Name" value={name}  onChange={evt => setName(evt.target.value)}/>
+                <input placeholder="city" value={city}  onChange={evt => setCity(evt.target.value)}/>
+
+            </form>
+        </div>
+    )
+}
+```
+
+
+El proplema que ocurre en algunas ocaciones es que queremos que la ui este sincronizada con lo que hay en el servidor.
+
+Una forma de resolver esto es hacer una peticion para traer la peticion nueva:
+
+```tsx
+// en useQuery despues de asignar la query se le puede pasar un objeto con el valor de polInterval
+// de esta forma se le esta inficando que cada 2000 milisegundos va a volver a a hacer la query para recargar nueva informacion
+{data} = useQuery(ALL_PERSON, {polInterval: 2000})
+```
+El problema de esto es que esta haciando una peticion.
+
+Otra alternativa es exportar la query para que cuando se cree una nueva persona este refresque la informacion despues de agregar la informacion, de esta forma no se tendran que hacer peticiones cada dos segundos.
+
+```tsx
+import {ALL_PERSONS} from "../querys"
+
+//en useMotation hay una opcion de refetchQueries
+//cuando se haga la mutacion se hara un refetch de todas las querys que se le indiquen
+const [createPerson] = useMutation(CREATE_PERSON,{refetchQueries: [{query: ALL_PERSONS}]})
+```
+
+Hay otra forma mas compleja que seria por suscripciones.
+
+cuando estamos cambiando un dato en lugar de agregar un dato, una recomendacion es que en la query tambien retornes la id y el campo en el que ocurri el cambio, esto para que el cache de apollo pueda hacer el cambio sincronizado.
+
+### control de errores
+
+```tsx
+//se le pasa una propiedad para notificar el error, esta creada por nosotros
+export const PersonForm = ({notifyError}) => {
+    const [name,setName] = useState("");
+    const [city,setCity] = useState("");
+    
+    
+    const [createPerson] = useMutation(CREATE_PERSON,{
+        onError: (error) =>{
+            //graphQLError es un array
+            notifyError(error.graphQLError[0].message)
+        }
+    })
+
+
+    const handleSubmit = e => {
+        e.preventDefault()
+        createPerson({variables:{name, city}})
+
+        setName("");
+        setCity("");
+    }
+    return(
+        <div>
+            <h2>Create new Person</h2>
+            <form onSubmit={handleSubmit}>
+                <input placeholder="Name" value={name}  onChange={evt => setName(evt.target.value)}/>
+                <input placeholder="city" value={city}  onChange={evt => setCity(evt.target.value)}/>
+
+            </form>
+        </div>
+    )
+}
+```
+
+cuando hacemos mutaciones para cambior la informacion va a pedir algo como referencia, puede ser un nombre o un id, en caso de que coloquemos el nombre o id mal y hagamos la mutacion con el cambio esto no errojara un error. Esto ocurre por que graphql considera que esto es una operacion valida.
+
+Si queremos tener un control sobre este tipo de rrores podemos:
+
+```tsx
+import useMutation from "@apollo/client"
+//para controlar este tipo de errores podemos agregar el result en la segunda posicion
+// el result nos podria decir si esta regresando algun tipo de informacion
+// result.data.namequery
+const [editPerson,result] = useMutation(edit_PERSON)
 ```
