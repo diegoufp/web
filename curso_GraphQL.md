@@ -1690,3 +1690,136 @@ import useMutation from "@apollo/client"
 // result.data.namequery
 const [editPerson,result] = useMutation(edit_PERSON)
 ```
+
+## Conecta MongoDB con GraphQL
+
+instalaremos
+```
+npm install mongoose mongoose-unique-validator -E
+```
+- `mongoose-unique-validator`: para que los documentos que agregemos a la colleccion sean unicos.
+
+crearemos el archivo `models/person.js`:
+```ts
+import mongoose from 'mongoose';
+import uniqueValidator from "mongoose-unique-validator"
+
+//est esquema es muy similar a l;as typeDefinitions de graphql 
+//es importante tenelo separado de graphql por si algun dia dejamos de usar graphql o la base de datos
+// hay que crear las validaciones correctamente tanto en la base de datos como en graphql
+
+//name.unique : evita introducir otro documento en la coleccion que tenga el mismo valor para el name
+const schema = new mongoose.Schema({
+    name:{
+        type: String,
+        required: true,
+        unique: true,
+        minlength: 5
+    },
+    city: {
+        type: String,
+        required: true,
+        minlength: 5
+    }
+})
+schema.plugin(uniqueValidator)
+export default mongoose.model("Person", schema)
+```
+
+conexion de base de datos en `/pages/api/mongo.ts`:
+
+```ts
+import mongoose from "mongoose";
+
+//ingrsamos la url para conectarse a la base de datos
+const MONGODB_URI = "";
+
+mongoose.connect(MONGODB_URI,{
+    usaNewUrlParser: true,
+    useUnifiedTopology: true,
+    userFindAndModify: false,
+    useCreateIndex: true
+})
+.then(()=> {
+    console.log("connected to Mongodb")
+}).catch(error =>{
+    console.error(error.message)
+})
+```
+
+AHora editaremos los resolvers. Antes:
+```ts
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza"
+    }
+  ];
+
+export const resolvers = {
+    Query: {
+        personCount: () => persons.length,
+        allPersons: async(root,args) => persons,
+        findPerson: (root, args) => {
+        const {name} = args
+        return persons.find(person => person.name === name)
+        }
+    },
+    
+}
+
+```
+Despues:
+```ts
+import Person from "../models/person";
+import "../pages/api/db"
+/*
+const persons = [
+    {
+        name: "Midu",
+        city: "Barcelona"
+    },
+    {
+        name: "Youseff",
+        city: "Mataro"
+    },
+    {
+        name: "Itzi",
+        city: "Ibiza"
+    }
+  ];
+*/
+export const resolvers = {
+    Query: {
+        personCount: () => Person.collection.countDocuments(),
+        allPersons: async(root,args) => Person.find({}),
+        findPerson: (root, args) => {
+        const {name} = args
+        return Person.findOne({name})
+        }
+    },
+    Mutation: {
+        addPerson: (root, args) =>{
+            //esto seria sin control de erroes
+            const person = new Person({...args})
+            return person.save()
+        },
+        editCity: async (root, args)=>{
+            const person = await Person.findOne({name: args.name})
+            person.city = args.city
+            return person.save()
+        }
+    }
+}
+
+//Person.collection.countDocuments(): nos dara el numero de documentos que hay en la collection
+
+```

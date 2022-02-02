@@ -298,9 +298,6 @@ Incluso puede agregar datos adicionales a la consulta de GraphQL. Cada lanzamien
  para saber si estar en el servirdor o en el cliente:
 typeof window !== "undefined"
 
-https://www.youtube.com/watch?v=2jxc8DMzt0I
-
-1:11:00
 ## NEXTJS + MONGOB
 
 Mongodb nos da un modulo para node para poder conectarlo pero en esta ocacion vamos a usar un modulo especial de mongodb llamado [mongoose](https://mongoosejs.com/),que es basicammente un modulo que nos permite conectarnos a la base de datos y tambien a su vez modelar los datos, es decir, decirle a mongodb que es lo que vamos a estar guardando dentro de la base de datos.
