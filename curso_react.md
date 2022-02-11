@@ -6820,3 +6820,43 @@ const Contador = () => {
 
 export default Contador;
 ```
+
+## Error no detectado: demasiados renderizados
+
+En la aplicación React JS, a veces obtuvimos "Error no detectado: demasiados renderizados. React limita la cantidad de renderizados para evitar un bucle infinito". Pero ¿sabes por qué ha sucedido esto? De hecho, es causado por varios errores. Ahora tratamos de entender qué significa realmente este error para nosotros. Significa que nuestro componente se renderiza en un tiempo infinito. Ahora puede surgir una pregunta, ¿por qué nuestro componente se representa en un tiempo infinito? La razón es que nuestro estado cambia inmediatamente cuando se renderiza nuestro componente. Y sabemos que cuando cambie el estado, nuestro componente se renderizará nuevamente. Entonces hace un bucle infinito.
+
+Anteriormente sabemos que este error ocurre por muchas razones. Entonces, primero debe identificar su error y luego tratar de resolver este error. Ahora estoy tratando de dar un ejemplo para entender mejor sobre esto.
+
+**Ejemplo 1.**
+```jsx
+<button onClick={setToggle(!toggle)}>{ toggle ? 'Close' : 'Open' }</button>
+```
+En este escenario, necesitamos vincular la función de devolución de llamada para resolver.
+
+**Ejemplo 2.**
+```jsx
+const [msg, setMsg] = useState('Please open!!!');
+const [toggle, setToggle] = useState(false);
+
+if (msg) {
+  setToggle(true)
+}
+```
+Podemos resolver de otra manera:
+1. 
+```
+const [toggle, setToggle] = useState(msg ? true : false);
+```
+2. 
+```
+const [toggle, setToggle] = useState(!!msg);
+```
+
+3. 
+```
+useEffect(() => {
+ if (msg) {
+   setToggle(true)
+ }
+}, []);
+```
